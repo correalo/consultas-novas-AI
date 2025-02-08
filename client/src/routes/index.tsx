@@ -11,7 +11,7 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
   const { isAuthenticated, isLoading } = useAuth();
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return <div>Loading...</div>;
   }
 
   if (!isAuthenticated) {
@@ -24,10 +24,10 @@ function PrivateRoute({ children }: { children: JSX.Element }) {
 export function AppRoutes() {
   return (
     <Routes>
-      {/* Rotas públicas */}
+      {/* Public routes */}
       <Route path="/login" element={<Login />} />
 
-      {/* Rotas privadas */}
+      {/* Private routes */}
       <Route
         path="/"
         element={
@@ -100,7 +100,7 @@ export function AppRoutes() {
         }
       />
 
-      {/* Rota para páginas não encontradas */}
+      {/* Fallback for not found pages */}
       <Route path="*" element={<Navigate to="/" />} />
     </Routes>
   );

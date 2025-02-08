@@ -5,10 +5,10 @@ import { connectDB } from './config/database';
 import { logger } from './utils/logger';
 import authRoutes from './routes/auth';
 
-// Carrega as variáveis de ambiente
+// Load environment variables
 dotenv.config();
 
-// Conecta ao banco de dados
+// Connect to database
 connectDB();
 
 const app = express();
@@ -17,31 +17,31 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Logging de requisições
+// Request logging
 app.use((req, res, next) => {
   logger.info(`${req.method} ${req.url}`);
   next();
 });
 
-// Rotas
+// Routes
 app.use('/api/auth', authRoutes);
 
-// Rota básica
+// Basic route
 app.get('/', (req, res) => {
-  res.json({ message: 'API do Prontuário Médico' });
+  res.json({ message: 'Medical Records API' });
 });
 
-// Tratamento de erros
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+// Error handling
+app.use((err: Error, req: express.Request, res: express.Response) => {
   logger.error(err.stack);
   res.status(500).json({
-    message: 'Erro interno do servidor',
+    message: 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = 3002;
 
 app.listen(PORT, () => {
-  logger.info(`Servidor rodando na porta ${PORT}`);
+  logger.info(`Server running on port ${PORT}`);
 });

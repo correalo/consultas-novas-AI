@@ -1,0 +1,39 @@
+{
+  "version": "0.2",
+  "language": "en,pt,pt-BR",
+  "words": [
+    "HAOC",
+    "Lefort",
+    "Liberdade",
+    "Morumbi",
+    "HCor",
+    "HIAE",
+    "HSL",
+    "IGESP",
+    "indicou",
+    "Classificação",
+    "classificação",
+    "Rotina",
+    "Urgente",
+    "cirúrgico",
+    "Hospitais",
+    "Observações",
+    "observações",
+    "Histórico",
+    "notas",
+    "relevantes",
+    "Pacientes",
+    "insira",
+    "bairro",
+    "contato",
+    "emergência",
+    "relacionamento",
+    "Sulamerica"
+  ],
+  "ignorePaths": [
+    "node_modules/**",
+    "dist/**",
+    "build/**",
+    ".git/**"
+  ]
+}
