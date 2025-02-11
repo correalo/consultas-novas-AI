@@ -34,17 +34,32 @@ function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
-      validateToken(token);
+      validateToken();
     } else {
       setIsLoading(false);
     }
   }, []);
 
-  const validateToken = async (token: string) => {
+  const validateToken = async () => {
     try {
-      setIsLoading(false);
+      const response = await fetch('http://localhost:3002/api/auth/validate', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem('token');
+        setUser(null);
+      }
     } catch (error) {
-      logout();
+      console.error('Error validating token:', error);
+      localStorage.removeItem('token');
+      setUser(null);
+    } finally {
       setIsLoading(false);
     }
   };
@@ -59,16 +74,17 @@ function AuthProvider({ children }: { children: ReactNode }) {
         body: JSON.stringify({ email, password }),
       });
 
-      if (!response.ok) {
-        throw new Error('Credenciais inválidas');
+      if (response.ok) {
+        const { token, user: userData } = await response.json();
+        localStorage.setItem('token', token);
+        setUser(userData);
+        navigate('/');
+      } else {
+        throw new Error('Invalid credentials');
       }
-
-      const data = await response.json();
-      localStorage.setItem('token', data.token);
-      setUser(data.user);
-      navigate('/dashboard');
     } catch (error) {
-      throw new Error('Erro ao fazer login');
+      console.error('Login error:', error);
+      throw error;
     }
   };
 
@@ -79,13 +95,15 @@ function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      login,
-      logout,
-      isAuthenticated: !!user,
-      isLoading,
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        logout,
+        isAuthenticated: !!user,
+        isLoading,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );

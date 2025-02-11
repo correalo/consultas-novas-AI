@@ -1,34 +1,25 @@
 import { BrowserRouter } from 'react-router-dom';
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { ThemeProvider, CssBaseline } from '@mui/material';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 import { theme } from './theme';
 import { AppRoutes } from './routes';
-import { AuthProvider } from './contexts/AuthContext';
-import { Layout } from './components/Layout';
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      refetchOnWindowFocus: false,
-      retry: false,
-    },
-  },
-});
+import { Layout } from './components/Layout/Layout';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import ptBR from 'date-fns/locale/pt-BR';
 
 function App() {
   return (
-    <QueryClientProvider client={queryClient}>
+    <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
       <ThemeProvider theme={theme}>
         <CssBaseline />
         <BrowserRouter>
-          <AuthProvider>
-            <Layout>
-              <AppRoutes />
-            </Layout>
-          </AuthProvider>
+          <Layout>
+            <AppRoutes />
+          </Layout>
         </BrowserRouter>
       </ThemeProvider>
-    </QueryClientProvider>
+    </LocalizationProvider>
   );
 }
 

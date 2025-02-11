@@ -1,0 +1,32 @@
+{
+  "version": "0.2",
+  "language": "en,pt,pt_BR",
+  "words": [
+    "AMAFRESP",
+    "FUNDACAO",
+    "MARITIMA",
+    "SAUDE",
+    "FACIL",
+    "QUALITE",
+    "OPCAO",
+    "BASICO",
+    "CLASSICO",
+    "DINAMICO",
+    "ELETROPAULO",
+    "FAMILA",
+    "LIDER",
+    "MAXIMO",
+    "PJCE",
+    "MEDICUS",
+    "PADRAO",
+    "REFE",
+    "SCANIA",
+    "SUPERIEUR",
+    "UNIPLAN",
+    "VERSATIL",
+    "OBITO"
+  ],
+  "ignorePaths": [
+    "node_modules/**"
+  ]
+}

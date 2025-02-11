@@ -1,151 +1,126 @@
 import mongoose from 'mongoose';
 
+interface IFollowUp {
+  exams?: string;
+  returns?: string;
+  attendance?: 'sim' | 'nao';
+  forwardExams?: boolean;
+  contact1?: boolean;
+  contact2?: boolean;
+  contact3?: boolean;
+}
+
 export interface IPatient extends mongoose.Document {
   name: string;
-  dateOfBirth: Date;
-  gender: 'male' | 'female' | 'other';
+  sex: string;
   cpf: string;
-  rg?: string;
-  address: {
-    street: string;
-    number: string;
-    complement?: string;
-    neighborhood: string;
-    city: string;
-    state: string;
-    zipCode: string;
-  };
+  birthDate: string;
+  age: string;
   phone: string;
-  email?: string;
-  emergencyContact: {
-    name: string;
-    phone: string;
-    relationship: string;
-  };
-  bloodType?: string;
-  allergies?: string[];
-  chronicConditions?: string[];
-  medications?: string[];
-  consultationDate: Date;
+  email: string;
+  consultationDate: string;
   insuranceProvider: string;
   insuranceType: string;
   classification: string;
-  surgeryDate?: Date;
-  observations?: string;
-  referral?: string;
-  hospitals?: string[];
+  surgeryDate: string;
+  surgeryType: string;
+  followUpData: Record<string, IFollowUp>;
+  hospitals: string[];
+  referral: string;
+  observations: string;
 }
+
+const followUpSchema = new mongoose.Schema({
+  exams: String,
+  returns: String,
+  attendance: {
+    type: String,
+    enum: ['sim', 'nao'],
+  },
+  forwardExams: Boolean,
+  contact1: Boolean,
+  contact2: Boolean,
+  contact3: Boolean,
+});
 
 const patientSchema = new mongoose.Schema({
   name: {
     type: String,
-    required: [true, 'Por favor, insira o nome do paciente'],
+    required: true,
     trim: true,
   },
-  dateOfBirth: {
-    type: Date,
-    required: [true, 'Por favor, insira a data de nascimento'],
-  },
-  gender: {
+  sex: {
     type: String,
-    enum: ['male', 'female', 'other'],
-    required: [true, 'Por favor, selecione o gênero'],
+    required: true,
   },
   cpf: {
     type: String,
-    required: [true, 'Por favor, insira o CPF'],
+    required: true,
     unique: true,
     trim: true,
   },
-  rg: {
+  birthDate: {
     type: String,
-    trim: true,
+    required: true,
   },
-  address: {
-    street: {
-      type: String,
-      required: [true, 'Por favor, insira a rua'],
-    },
-    number: {
-      type: String,
-      required: [true, 'Por favor, insira o número'],
-    },
-    complement: String,
-    neighborhood: {
-      type: String,
-      required: [true, 'Por favor, insira o bairro'],
-    },
-    city: {
-      type: String,
-      required: [true, 'Por favor, insira a cidade'],
-    },
-    state: {
-      type: String,
-      required: [true, 'Por favor, insira o estado'],
-    },
-    zipCode: {
-      type: String,
-      required: [true, 'Por favor, insira o CEP'],
-    },
+  age: {
+    type: String,
+    required: true,
   },
   phone: {
     type: String,
-    required: [true, 'Por favor, insira o telefone'],
+    required: true,
+    trim: true,
   },
   email: {
     type: String,
-    lowercase: true,
     trim: true,
+    lowercase: true,
   },
-  emergencyContact: {
-    name: {
-      type: String,
-      required: [true, 'Por favor, insira o nome do contato de emergência'],
-    },
-    phone: {
-      type: String,
-      required: [true, 'Por favor, insira o telefone do contato de emergência'],
-    },
-    relationship: {
-      type: String,
-      required: [true, 'Por favor, insira o relacionamento do contato de emergência'],
-    },
-  },
-  bloodType: String,
-  allergies: [String],
-  chronicConditions: [String],
-  medications: [String],
   consultationDate: {
-    type: Date,
-    required: [true, 'Por favor, insira a data da consulta'],
+    type: String,
+    required: true,
   },
   insuranceProvider: {
     type: String,
-    required: [true, 'Por favor, selecione o convênio'],
+    required: true,
   },
   insuranceType: {
     type: String,
-    required: [true, 'Por favor, insira o tipo de plano'],
+    required: true,
   },
   classification: {
     type: String,
-    required: [true, 'Por favor, selecione a classificação'],
+    required: true,
   },
   surgeryDate: {
-    type: Date,
+    type: String,
+  },
+  surgeryType: {
+    type: String,
+  },
+  followUpData: {
+    type: Map,
+    of: followUpSchema,
+    default: {},
+  },
+  hospitals: [{
+    type: String,
+  }],
+  referral: {
+    type: String,
   },
   observations: {
     type: String,
   },
-  referral: {
-    type: String,
-  },
-  hospitals: {
-    type: [String],
-    enum: ['HAOC', 'H. Santa Catarina', 'Lefort Liberdade', 'Lefort Morumbi', 'HCor', 'HIAE', 'HSL', 'H. Santa Paula', 'IGESP'],
-  },
 }, {
   timestamps: true,
 });
+
+// Índices para melhorar a performance das consultas
+patientSchema.index({ cpf: 1 }, { unique: true });
+patientSchema.index({ name: 1 });
+patientSchema.index({ email: 1 });
+patientSchema.index({ insuranceProvider: 1 });
 
 export const Patient = mongoose.model<IPatient>('Patient', patientSchema);

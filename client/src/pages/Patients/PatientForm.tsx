@@ -19,6 +19,8 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
+import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
+import { grey } from '@mui/material/colors';
 
 const HOSPITALS = [
   'NENHUM',
@@ -36,12 +38,10 @@ const HOSPITALS = [
 const HOSPITALS_ROW1 = HOSPITALS.slice(0, 5);
 const HOSPITALS_ROW2 = HOSPITALS.slice(5);
 
-const HOSPITALS_PER_ROW = 5;
-
 const INSURANCE_PROVIDERS = [
   'ABET',
   'ALLIANZ',
-  'AMAFRE',
+  'AMAFRESP',
   'AMIL',
   'BRADESCO',
   'CABESP',
@@ -319,9 +319,30 @@ const CLASSIFICATIONS = [
   'LIMBO',
 ] as const;
 
+interface FormData {
+  _id?: string;
+  name: string;
+  sex: string;
+  cpf: string;
+  birthDate: string;
+  age: string;
+  phone: string;
+  email: string;
+  consultationDate: string;
+  insuranceProvider: string;
+  insuranceType: string;
+  classification: string;
+  surgeryDate: string;
+  surgeryType: string;
+  followUpData: Record<string, any>;
+  hospitals: string[];
+  referral: string;
+  observations: string;
+}
+
 export function PatientForm() {
   const navigate = useNavigate();
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     name: '',
     sex: '',
     cpf: '',
@@ -334,9 +355,11 @@ export function PatientForm() {
     insuranceType: '',
     classification: '',
     surgeryDate: '',
-    observations: '',
+    surgeryType: '',
+    followUpData: {},
+    hospitals: [],
     referral: '',
-    hospitals: [] as string[],
+    observations: '',
   });
 
   const [cpfStatus, setCpfStatus] = useState<{
@@ -462,7 +485,7 @@ export function PatientForm() {
     }));
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string>) => {
+  const handleSelectChange = (e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     
     if (name === 'insuranceProvider') {
@@ -495,6 +518,19 @@ export function PatientForm() {
     return INSURANCE_SUBTYPES[normalizedProvider] || INSURANCE_SUBTYPES['default'];
   };
 
+  const handleFollowUpChange = (data: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      followUpData: {
+        ...prev.followUpData,
+        [data.period]: {
+          ...prev.followUpData[data.period],
+          [data.field]: data.value
+        }
+      }
+    }));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     // TODO: Implement save logic
@@ -508,283 +544,303 @@ export function PatientForm() {
           Novo Paciente
         </Typography>
 
-        <Paper sx={{ p: 3 }}>
+        <Paper 
+          sx={{ 
+            p: 3,
+            backgroundColor: grey[400],
+          }}
+        >
           <form onSubmit={handleSubmit}>
-            <Grid container spacing={3}>
-              {/* Primeira linha: Nome (4 colunas), Sexo (2 colunas), CPF (3 colunas) e Indicação (3 colunas) */}
-              <Grid item xs={12} sm={4}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Nome Completo"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleTextChange}
-                  onBlur={handleNameBlur}
-                />
-              </Grid>
-              <Grid item xs={12} sm={2}>
-                <FormControl fullWidth required>
-                  <InputLabel>Sexo</InputLabel>
-                  <Select
-                    name="sex"
-                    value={formData.sex}
-                    onChange={handleSelectChange}
-                    label="Sexo"
-                  >
-                    <MenuItem value="M">Masculino</MenuItem>
-                    <MenuItem value="F">Feminino</MenuItem>
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  required
-                  fullWidth
-                  label="CPF"
-                  name="cpf"
-                  value={formData.cpf}
-                  onChange={handleTextChange}
-                  color={cpfStatus.color}
-                  helperText={cpfStatus.message}
-                  error={cpfStatus.color === 'error'}
-                  inputProps={{
-                    maxLength: 14
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  label="Indicação"
-                  name="referral"
-                  value={formData.referral}
-                  onChange={handleTextChange}
-                  placeholder="Quem indicou este paciente?"
-                />
-              </Grid>
+            <Box sx={{ 
+              p: 2, 
+              backgroundColor: '#e8e8e8',  
+              borderRadius: 1
+            }}>
+              <Grid container spacing={3}>
+                {/* Primeira linha: Nome (4 colunas), Sexo (2 colunas), CPF (3 colunas) e Indicação (3 colunas) */}
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Nome Completo"
+                    name="name"
+                    value={formData.name}
+                    onChange={handleTextChange}
+                    onBlur={handleNameBlur}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={2}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Sexo</InputLabel>
+                    <Select
+                      name="sex"
+                      value={formData.sex}
+                      onChange={handleSelectChange}
+                      label="Sexo"
+                    >
+                      <MenuItem value="M">Masculino</MenuItem>
+                      <MenuItem value="F">Feminino</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="CPF"
+                    name="cpf"
+                    value={formData.cpf}
+                    onChange={handleTextChange}
+                    color={cpfStatus.color}
+                    helperText={cpfStatus.message}
+                    error={cpfStatus.color === 'error'}
+                    inputProps={{
+                      maxLength: 14
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="Indicação"
+                    name="referral"
+                    value={formData.referral}
+                    onChange={handleTextChange}
+                    placeholder="Quem indicou este paciente?"
+                  />
+                </Grid>
 
-              {/* Segunda linha: Data de Nascimento, Telefone, Email e Data da Consulta */}
-              <Grid item xs={12} sm={2}>
-                <TextField
-                  required
-                  fullWidth
-                  type="date"
-                  label="Data de Nascimento"
-                  name="birthDate"
-                  value={formData.birthDate}
-                  onChange={handleTextChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={1}>
-                <TextField
-                  fullWidth
-                  label="Idade"
-                  value={formData.age}
-                  InputProps={{
-                    readOnly: true,
-                  }}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  label="Celular"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleTextChange}
-                  placeholder="(XX)XXXXXXXXX"
-                  inputProps={{
-                    maxLength: 13
-                  }}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  label="E-mail"
-                  name="email"
-                  type="email"
-                  value={formData.email}
-                  onChange={handleTextChange}
-                  color={emailStatus.color}
-                  helperText={emailStatus.message}
-                  error={emailStatus.color === 'error'}
-                />
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  required
-                  fullWidth
-                  type="datetime-local"
-                  label="Data da Consulta"
-                  name="consultationDate"
-                  value={formData.consultationDate}
-                  onChange={handleTextChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+                {/* Segunda linha: Data de Nascimento, Telefone, Email e Data da Consulta */}
+                <Grid item xs={12} sm={2}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="date"
+                    label="Data de Nascimento"
+                    name="birthDate"
+                    value={formData.birthDate}
+                    onChange={handleTextChange}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={1}>
+                  <TextField
+                    fullWidth
+                    label="Idade"
+                    value={formData.age}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="Celular"
+                    name="phone"
+                    value={formData.phone}
+                    onChange={handleTextChange}
+                    placeholder="(XX)XXXXXXXXX"
+                    inputProps={{
+                      maxLength: 13
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    label="E-mail"
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleTextChange}
+                    color={emailStatus.color}
+                    helperText={emailStatus.message}
+                    error={emailStatus.color === 'error'}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="datetime-local"
+                    label="Data da Consulta"
+                    name="consultationDate"
+                    value={formData.consultationDate}
+                    onChange={handleTextChange}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
 
-              {/* Terceira linha: Convênio, Tipo de Plano, Classificação e Data da Cirurgia */}
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth required>
-                  <InputLabel>Convênio</InputLabel>
-                  <Select
-                    name="insuranceProvider"
-                    value={formData.insuranceProvider}
+                {/* Terceira linha: Convênio, Tipo de Plano, Classificação e Data da Cirurgia */}
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Convênio</InputLabel>
+                    <Select
+                      name="insuranceProvider"
+                      value={formData.insuranceProvider}
+                      onChange={handleSelectChange}
+                      label="Convênio"
+                    >
+                      {INSURANCE_PROVIDERS.map((provider) => (
+                        <MenuItem key={provider} value={provider.toLowerCase()}>
+                          {provider}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    required
+                    fullWidth
+                    label="Tipo de Plano"
+                    name="insuranceType"
+                    value={formData.insuranceType}
+                    select
                     onChange={handleSelectChange}
-                    label="Convênio"
+                    disabled={!formData.insuranceProvider}
+                    SelectProps={{
+                      MenuProps: {
+                        style: { maxHeight: 300 },
+                      },
+                    }}
                   >
-                    {INSURANCE_PROVIDERS.map((provider) => (
-                      <MenuItem key={provider} value={provider.toLowerCase()}>
-                        {provider}
+                    {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
+                      <MenuItem key={subtype} value={subtype}>
+                        {subtype}
                       </MenuItem>
                     ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  required
-                  fullWidth
-                  label="Tipo de Plano"
-                  name="insuranceType"
-                  value={formData.insuranceType}
-                  select
-                  onChange={handleSelectChange}
-                  disabled={!formData.insuranceProvider}
-                  SelectProps={{
-                    MenuProps: {
-                      style: { maxHeight: 300 },
-                    },
-                  }}
-                >
-                  {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
-                    <MenuItem key={subtype} value={subtype}>
-                      {subtype}
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <FormControl fullWidth required>
-                  <InputLabel>Classificação</InputLabel>
-                  <Select
-                    name="classification"
-                    value={formData.classification}
-                    onChange={handleSelectChange}
-                    label="Classificação"
-                  >
-                    {CLASSIFICATIONS.map((classification) => (
-                      <MenuItem key={classification} value={classification.toLowerCase()}>
-                        {classification}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-              </Grid>
-              <Grid item xs={12} sm={3}>
-                <TextField
-                  fullWidth
-                  type="date"
-                  label="Data da Cirurgia"
-                  name="surgeryDate"
-                  value={formData.surgeryDate}
-                  onChange={handleTextChange}
-                  InputLabelProps={{ shrink: true }}
-                />
-              </Grid>
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <FormControl fullWidth required>
+                    <InputLabel>Classificação</InputLabel>
+                    <Select
+                      name="classification"
+                      value={formData.classification}
+                      onChange={handleSelectChange}
+                      label="Classificação"
+                    >
+                      {CLASSIFICATIONS.map((classification) => (
+                        <MenuItem key={classification} value={classification.toLowerCase()}>
+                          {classification}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                </Grid>
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    type="date"
+                    label="Data da Cirurgia"
+                    name="surgeryDate"
+                    value={formData.surgeryDate}
+                    onChange={handleTextChange}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
 
-              {/* Hospitais */}
-              <Grid item xs={12}>
-                <FormControl component="fieldset" sx={{ width: '100%' }}>
-                  <FormLabel component="legend">Hospitais Possíveis</FormLabel>
-                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                    <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
-                      {HOSPITALS_ROW1.map((hospital) => (
-                        <FormControlLabel
-                          key={hospital}
-                          control={
-                            <Checkbox
-                              checked={formData.hospitals.includes(hospital)}
-                              onChange={handleHospitalChange(hospital)}
-                              name={hospital}
-                              size="small"
-                            />
-                          }
-                          label={hospital}
-                          sx={{
-                            width: '20%',
-                            '& .MuiTypography-root': {
-                              fontSize: '0.85rem',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                {/* Hospitais */}
+                <Grid item xs={12}>
+                  <FormControl component="fieldset" sx={{ width: '100%' }}>
+                    <FormLabel component="legend">Hospitais Possíveis</FormLabel>
+                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                      <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
+                        {HOSPITALS_ROW1.map((hospital) => (
+                          <FormControlLabel
+                            key={hospital}
+                            control={
+                              <Checkbox
+                                checked={formData.hospitals.includes(hospital)}
+                                onChange={handleHospitalChange(hospital)}
+                                name={hospital}
+                                size="small"
+                              />
                             }
-                          }}
-                        />
-                      ))}
-                    </FormGroup>
-                    <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
-                      {HOSPITALS_ROW2.map((hospital) => (
-                        <FormControlLabel
-                          key={hospital}
-                          control={
-                            <Checkbox
-                              checked={formData.hospitals.includes(hospital)}
-                              onChange={handleHospitalChange(hospital)}
-                              name={hospital}
-                              size="small"
-                            />
-                          }
-                          label={hospital}
-                          sx={{
-                            width: '20%',
-                            '& .MuiTypography-root': {
-                              fontSize: '0.85rem',
-                              whiteSpace: 'nowrap',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis'
+                            label={hospital}
+                            sx={{
+                              width: '20%',
+                              '& .MuiTypography-root': {
+                                fontSize: '0.85rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }
+                            }}
+                          />
+                        ))}
+                      </FormGroup>
+                      <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
+                        {HOSPITALS_ROW2.map((hospital) => (
+                          <FormControlLabel
+                            key={hospital}
+                            control={
+                              <Checkbox
+                                checked={formData.hospitals.includes(hospital)}
+                                onChange={handleHospitalChange(hospital)}
+                                name={hospital}
+                                size="small"
+                              />
                             }
-                          }}
-                        />
-                      ))}
-                    </FormGroup>
+                            label={hospital}
+                            sx={{
+                              width: '20%',
+                              '& .MuiTypography-root': {
+                                fontSize: '0.85rem',
+                                whiteSpace: 'nowrap',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis'
+                              }
+                            }}
+                          />
+                        ))}
+                      </FormGroup>
+                    </Box>
+                  </FormControl>
+                </Grid>
+
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    label="Observações"
+                    name="observations"
+                    value={formData.observations}
+                    onChange={handleTextChange}
+                    placeholder="Histórico do paciente, notas da consulta e outras observações relevantes..."
+                  />
+                </Grid>
+
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
+                    Acompanhamento
+                  </Typography>
+                  <FollowUpTable
+                    patientId={formData._id || ''}
+                    onDataChange={handleFollowUpChange}
+                  />
+                </Grid>
+
+                {/* Botões */}
+                <Grid item xs={12}>
+                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                    <Button
+                      variant="outlined"
+                      onClick={() => navigate('/patients')}
+                    >
+                      Cancelar
+                    </Button>
+                    <Button type="submit" variant="contained" color="primary">
+                      Salvar
+                    </Button>
                   </Box>
-                </FormControl>
+                </Grid>
               </Grid>
-
-              {/* Observações */}
-              <Grid item xs={12}>
-                <TextField
-                  fullWidth
-                  multiline
-                  rows={4}
-                  label="Observações"
-                  name="observations"
-                  value={formData.observations}
-                  onChange={handleTextChange}
-                  placeholder="Histórico do paciente, notas da consulta e outras observações relevantes..."
-                />
-              </Grid>
-
-              {/* Botões */}
-              <Grid item xs={12}>
-                <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => navigate('/patients')}
-                  >
-                    Cancelar
-                  </Button>
-                  <Button type="submit" variant="contained" color="primary">
-                    Salvar
-                  </Button>
-                </Box>
-              </Grid>
-            </Grid>
+            </Box>
           </form>
         </Paper>
       </Box>

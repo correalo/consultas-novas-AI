@@ -4,6 +4,7 @@ import dotenv from 'dotenv';
 import { connectDB } from './config/database';
 import { logger } from './utils/logger';
 import authRoutes from './routes/auth';
+import patientRoutes from './routes/patients';
 
 // Load environment variables
 dotenv.config();
@@ -25,6 +26,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.use('/api/auth', authRoutes);
+app.use('/api/patients', patientRoutes);
 
 // Basic route
 app.get('/', (req, res) => {
@@ -32,15 +34,22 @@ app.get('/', (req, res) => {
 });
 
 // Error handling
-app.use((err: Error, req: express.Request, res: express.Response) => {
+app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+  logger.error(`Error: ${err.message}`);
   logger.error(err.stack);
+  
   res.status(500).json({
     message: 'Internal server error',
     error: process.env.NODE_ENV === 'development' ? err.message : undefined,
   });
 });
 
-const PORT = 3002;
+// 404 handler
+app.use((req, res) => {
+  res.status(404).json({ message: 'Route not found' });
+});
+
+const PORT = process.env.PORT || 3002;
 
 app.listen(PORT, () => {
   logger.info(`Server running on port ${PORT}`);
