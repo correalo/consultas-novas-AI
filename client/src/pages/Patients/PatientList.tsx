@@ -86,7 +86,7 @@ export function PatientList() {
                 <TableCell>Convênio</TableCell>
                 <TableCell>Tipo de Plano</TableCell>
                 <TableCell>Classificação</TableCell>
-                <TableCell>Data da Cirurgia</TableCell>
+                <TableCell>Profissão</TableCell>
                 <TableCell>Hospitais</TableCell>
                 <TableCell>Indicação</TableCell>
                 <TableCell>Observações</TableCell>
@@ -108,9 +108,7 @@ export function PatientList() {
                     {patient.classification === 'pre-surgery' && 'Pré-cirúrgico'}
                     {patient.classification === 'post-surgery' && 'Pós-cirúrgico'}
                   </TableCell>
-                  <TableCell>
-                    {patient.surgeryDate ? new Date(patient.surgeryDate).toLocaleDateString() : '-'}
-                  </TableCell>
+                  <TableCell>{patient.profession || '-'}</TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
                       {patient.hospitals?.map((hospital: string) => (

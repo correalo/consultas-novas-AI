@@ -22,8 +22,8 @@ export interface IPatient extends mongoose.Document {
   insuranceProvider: string;
   insuranceType: string;
   classification: string;
+  profession: string;
   surgeryDate: string;
-  surgeryType: string;
   followUpData: Record<string, IFollowUp>;
   hospitals: string[];
   referral: string;
@@ -93,10 +93,10 @@ const patientSchema = new mongoose.Schema({
     type: String,
     required: true,
   },
-  surgeryDate: {
+  profession: {
     type: String,
   },
-  surgeryType: {
+  surgeryDate: {
     type: String,
   },
   followUpData: {

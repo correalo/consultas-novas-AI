@@ -16,8 +16,12 @@ import {
   FormControlLabel,
   Checkbox,
   FormLabel,
+  IconButton,
+  Collapse
 } from '@mui/material';
-import { useNavigate } from 'react-router-dom';
+import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
 import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
 import { grey } from '@mui/material/colors';
@@ -37,6 +41,45 @@ const HOSPITALS = [
 
 const HOSPITALS_ROW1 = HOSPITALS.slice(0, 5);
 const HOSPITALS_ROW2 = HOSPITALS.slice(5);
+
+const PROFESSIONS = [
+  'ADMINISTRADOR(A)',
+  'ADVOGADO(A)',
+  'AGRICULTOR(A)',
+  'APOSENTADO(A)',
+  'ARQUITETO(A)',
+  'ARTISTA',
+  'ASSISTENTE SOCIAL',
+  'AUTÔNOMO(A)',
+  'BANCÁRIO(A)',
+  'BIBLIOTECÁRIO(A)',
+  'COMERCIANTE',
+  'CONTADOR(A)',
+  'DENTISTA',
+  'DESIGNER',
+  'DO LAR',
+  'ECONOMISTA',
+  'EMPRESÁRIO(A)',
+  'ENFERMEIRO(A)',
+  'ENGENHEIRO(A)',
+  'ESTUDANTE',
+  'FARMACÊUTICO(A)',
+  'FISIOTERAPEUTA',
+  'FUNCIONÁRIO(A) PÚBLICO(A)',
+  'JORNALISTA',
+  'MÉDICO(A)',
+  'MOTORISTA',
+  'NUTRICIONISTA',
+  'PEDAGOGO(A)',
+  'PROFESSOR(A)',
+  'PROGRAMADOR(A)',
+  'PSICÓLOGO(A)',
+  'PUBLICITÁRIO(A)',
+  'SECRETÁRIO(A)',
+  'TÉCNICO(A)',
+  'VENDEDOR(A)',
+  'OUTROS'
+] as const;
 
 const INSURANCE_PROVIDERS = [
   'ABET',
@@ -332,16 +375,17 @@ interface FormData {
   insuranceProvider: string;
   insuranceType: string;
   classification: string;
-  surgeryDate: string;
-  surgeryType: string;
+  profession: string;
   followUpData: Record<string, any>;
   hospitals: string[];
   referral: string;
   observations: string;
+  surgeryDate: string;
 }
 
 export function PatientForm() {
   const navigate = useNavigate();
+  const { id } = useParams();
   const [formData, setFormData] = useState<FormData>({
     name: '',
     sex: '',
@@ -354,12 +398,12 @@ export function PatientForm() {
     insuranceProvider: '',
     insuranceType: '',
     classification: '',
-    surgeryDate: '',
-    surgeryType: '',
+    profession: '',
     followUpData: {},
     hospitals: [],
     referral: '',
     observations: '',
+    surgeryDate: '',
   });
 
   const [cpfStatus, setCpfStatus] = useState<{
@@ -371,6 +415,8 @@ export function PatientForm() {
     color: 'success' | 'warning' | 'error';
     message: string;
   }>({ color: 'warning', message: '' });
+
+  const [open, setOpen] = useState(true);
 
   const calculateAge = (birthDate: string): string => {
     if (!birthDate) return '';
@@ -518,21 +564,8 @@ export function PatientForm() {
     return INSURANCE_SUBTYPES[normalizedProvider] || INSURANCE_SUBTYPES['default'];
   };
 
-  const handleFollowUpChange = (data: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      followUpData: {
-        ...prev.followUpData,
-        [data.period]: {
-          ...prev.followUpData[data.period],
-          [data.field]: data.value
-        }
-      }
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     // TODO: Implement save logic
     navigate('/patients');
   };
@@ -673,7 +706,7 @@ export function PatientForm() {
                   />
                 </Grid>
 
-                {/* Terceira linha: Convênio, Tipo de Plano, Classificação e Data da Cirurgia */}
+                {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required>
                     <InputLabel>Convênio</InputLabel>
@@ -732,15 +765,21 @@ export function PatientForm() {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3}>
-                  <TextField
-                    fullWidth
-                    type="date"
-                    label="Data da Cirurgia"
-                    name="surgeryDate"
-                    value={formData.surgeryDate}
-                    onChange={handleTextChange}
-                    InputLabelProps={{ shrink: true }}
-                  />
+                  <FormControl fullWidth>
+                    <InputLabel>Profissão</InputLabel>
+                    <Select
+                      name="profession"
+                      value={formData.profession}
+                      onChange={handleSelectChange}
+                      label="Profissão"
+                    >
+                      {PROFESSIONS.map((profession) => (
+                        <MenuItem key={profession} value={profession}>
+                          {profession}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
 
                 {/* Hospitais */}
@@ -804,25 +843,52 @@ export function PatientForm() {
 
                 <Grid item xs={12}>
                   <TextField
-                    fullWidth
-                    multiline
-                    rows={4}
                     label="Observações"
                     name="observations"
                     value={formData.observations}
                     onChange={handleTextChange}
-                    placeholder="Histórico do paciente, notas da consulta e outras observações relevantes..."
+                    fullWidth
+                    multiline
+                    rows={4}
+                    sx={{
+                      '& .MuiInputBase-root': {
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                      }
+                    }}
                   />
                 </Grid>
 
                 <Grid item xs={12}>
-                  <Typography variant="h6" gutterBottom sx={{ mt: 2 }}>
-                    Acompanhamento
-                  </Typography>
-                  <FollowUpTable
-                    patientId={formData._id || ''}
-                    onDataChange={handleFollowUpChange}
-                  />
+                  <Box sx={{ p: 2 }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
+                      <Typography variant="h6" color="primary">
+                        Acompanhamento
+                      </Typography>
+                      <IconButton
+                        aria-label={open ? 'Recolher tabela' : 'Expandir tabela'}
+                        size="small"
+                        onClick={() => setOpen(!open)}
+                      >
+                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+                      </IconButton>
+                    </Box>
+                    <Collapse in={open} timeout="auto" unmountOnExit>
+                      <FollowUpTable
+                        patientId={id || ''}
+                        followUp={formData.followUpData}
+                        surgeryDate={formData.surgeryDate}
+                        classification={formData.classification}
+                        onSurgeryDateChange={(date) => setFormData(prev => ({ ...prev, surgeryDate: date }))}
+                        onDataChange={(data) => {
+                          setFormData(prev => ({
+                            ...prev,
+                            followUpData: data.followUp
+                          }));
+                        }}
+                      />
+                    </Collapse>
+                  </Box>
                 </Grid>
 
                 {/* Botões */}
