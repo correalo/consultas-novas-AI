@@ -52,6 +52,7 @@ const patientSchema = new mongoose.Schema({
   sex: {
     type: String,
     required: true,
+    enum: ['M', 'F'],
   },
   cpf: {
     type: String,

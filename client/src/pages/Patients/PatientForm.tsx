@@ -19,6 +19,8 @@ import {
   IconButton,
   Collapse
 } from '@mui/material';
+import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
+import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -27,7 +29,7 @@ import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
 import { grey } from '@mui/material/colors';
 
 const HOSPITALS = [
-  'NENHUM',
+  'Nenhum',
   'HAOC',
   'H. Santa Catarina',
   'Lefort Liberdade',
@@ -155,7 +157,7 @@ const INSURANCE_SUBTYPES: { [key: string]: string[] } = {
     'AMIL S350',
     'AMIL S450',
     'AMIL S580',
-    'AMIL S750',
+    'AMIL S750'
   ],
   'default': [
     'ABSOLUTO',
@@ -549,14 +551,25 @@ export function PatientForm() {
     }
   };
 
-  const handleHospitalChange = (hospital: string) => (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { checked } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      hospitals: checked
-        ? [...prev.hospitals, hospital]
-        : prev.hospitals.filter((h) => h !== hospital),
-    }));
+  const handleHospitalChange = (hospital: string) => (event: React.ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    
+    // Se estiver marcando "Nenhum", desmarca todos os outros
+    if (hospital === 'Nenhum' && checked) {
+      setFormData(prev => ({
+        ...prev,
+        hospitals: ['Nenhum']
+      }));
+    }
+    // Se estiver desmarcando "Nenhum" ou marcando outro hospital
+    else {
+      setFormData(prev => ({
+        ...prev,
+        hospitals: checked
+          ? [...prev.hospitals.filter(h => h !== 'Nenhum'), hospital]
+          : prev.hospitals.filter((h) => h !== hospital),
+      }));
+    }
   };
 
   const getInsuranceSubtypes = (provider: string) => {
@@ -589,36 +602,51 @@ export function PatientForm() {
               backgroundColor: '#e8e8e8',  
               borderRadius: 1
             }}>
-              <Grid container spacing={3}>
-                {/* Primeira linha: Nome (4 colunas), Sexo (2 colunas), CPF (3 colunas) e Indicação (3 colunas) */}
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={1.0}>
+                  <TextField
+                    label="ID"
+                    value={"123456789012"}
+                    disabled
+                    sx={{ 
+                      width: '100%',
+                      '& .MuiInputBase-input': {
+                        fontFamily: 'monospace',
+                        fontSize: '0.875rem'
+                      }
+                    }}
+                    InputProps={{
+                      readOnly: true,
+                    }}
+                  />
+                </Grid>
                 <Grid item xs={12} sm={4}>
                   <TextField
                     required
                     fullWidth
-                    label="Nome Completo"
+                    label="Nome"
                     name="name"
                     value={formData.name}
                     onChange={handleTextChange}
                     onBlur={handleNameBlur}
                   />
                 </Grid>
-                <Grid item xs={12} sm={2}>
+                <Grid item xs={12} sm={0.98}>
                   <FormControl fullWidth required>
                     <InputLabel>Sexo</InputLabel>
                     <Select
                       name="sex"
                       value={formData.sex}
-                      onChange={handleSelectChange}
                       label="Sexo"
+                      onChange={handleSelectChange}
                     >
-                      <MenuItem value="M">Masculino</MenuItem>
-                      <MenuItem value="F">Feminino</MenuItem>
+                      <MenuItem value="M">M</MenuItem>
+                      <MenuItem value="F">F</MenuItem>
                     </Select>
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3}>
                   <TextField
-                    required
                     fullWidth
                     label="CPF"
                     name="cpf"
@@ -634,6 +662,7 @@ export function PatientForm() {
                 </Grid>
                 <Grid item xs={12} sm={3}>
                   <TextField
+                    required
                     fullWidth
                     label="Indicação"
                     name="referral"
@@ -667,8 +696,9 @@ export function PatientForm() {
                     InputLabelProps={{ shrink: true }}
                   />
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
                   <TextField
+                    required
                     fullWidth
                     label="Celular"
                     name="phone"
@@ -678,20 +708,84 @@ export function PatientForm() {
                     inputProps={{
                       maxLength: 13
                     }}
+                    sx={{ width: 'calc(100% - 64px)' }}
                   />
+                  <div style={{ 
+                    height: '56px', 
+                    display: 'flex', 
+                    alignItems: 'center'
+                  }}>
+                    <IconButton
+                      color="success"
+                      onClick={() => {
+                        const phoneNumber = formData.phone.replace(/\D/g, '');
+                        if (phoneNumber) {
+                          window.open(`https://wa.me/55${phoneNumber}`, '_blank');
+                        }
+                      }}
+                      sx={{
+                        backgroundColor: '#25D366',
+                        color: 'white',
+                        borderRadius: '4px',
+                        width: '56px',
+                        height: '56px',
+                        '&:hover': {
+                          backgroundColor: '#128C7E'
+                        }
+                      }}
+                    >
+                      <WhatsAppIcon sx={{ fontSize: '2rem' }} />
+                    </IconButton>
+                  </div>
                 </Grid>
-                <Grid item xs={12} sm={3}>
+                <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
                   <TextField
+                    required
                     fullWidth
-                    label="E-mail"
+                    label="Email"
                     name="email"
-                    type="email"
                     value={formData.email}
                     onChange={handleTextChange}
                     color={emailStatus.color}
                     helperText={emailStatus.message}
                     error={emailStatus.color === 'error'}
+                    sx={{
+                      width: 'calc(100% - 64px)',
+                      '& .MuiInputBase-input': {
+                        fontSize: '0.875rem',
+                        height: '23px',
+                        padding: '16.5px 14px'
+                      },
+                      '& .MuiInputBase-root': {
+                        height: '56px'
+                      }
+                    }}
                   />
+                  <div style={{ 
+                    height: '56px', 
+                    display: 'flex', 
+                    alignItems: 'center'
+                  }}>
+                    <IconButton
+                      onClick={() => {
+                        if (formData.email) {
+                          window.open(`mailto:${formData.email}`, '_blank');
+                        }
+                      }}
+                      sx={{
+                        backgroundColor: '#1976d2',
+                        color: 'white',
+                        borderRadius: '4px',
+                        width: '56px',
+                        height: '56px',
+                        '&:hover': {
+                          backgroundColor: '#1565c0'
+                        }
+                      }}
+                    >
+                      <ForwardToInboxIcon sx={{ fontSize: '2rem' }} />
+                    </IconButton>
+                  </div>
                 </Grid>
                 <Grid item xs={12} sm={3}>
                   <TextField
@@ -725,27 +819,25 @@ export function PatientForm() {
                   </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Tipo de Plano"
-                    name="insuranceType"
-                    value={formData.insuranceType}
-                    select
-                    onChange={handleSelectChange}
-                    disabled={!formData.insuranceProvider}
-                    SelectProps={{
-                      MenuProps: {
-                        style: { maxHeight: 300 },
-                      },
-                    }}
-                  >
-                    {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
-                      <MenuItem key={subtype} value={subtype}>
-                        {subtype}
-                      </MenuItem>
-                    ))}
-                  </TextField>
+                  <FormControl fullWidth>
+                    <InputLabel>Tipo de Plano</InputLabel>
+                    <Select
+                      name="insuranceType"
+                      value={formData.insuranceType}
+                      label="Tipo de Plano"
+                      onChange={handleSelectChange}
+                      disabled={!formData.insuranceProvider}
+                      MenuProps={{
+                        style: { maxHeight: 300 }
+                      }}
+                    >
+                      {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
+                        <MenuItem key={subtype} value={subtype}>
+                          {subtype}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Grid>
                 <Grid item xs={12} sm={3}>
                   <FormControl fullWidth required>
@@ -797,6 +889,13 @@ export function PatientForm() {
                                 onChange={handleHospitalChange(hospital)}
                                 name={hospital}
                                 size="small"
+                                disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum')}
+                                sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
+                                  color: '#d32f2f',
+                                  '&.Mui-checked': {
+                                    color: '#d32f2f',
+                                  }
+                                } : undefined}
                               />
                             }
                             label={hospital}
@@ -806,7 +905,10 @@ export function PatientForm() {
                                 fontSize: '0.85rem',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis'
+                                textOverflow: 'ellipsis',
+                                ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
+                                  color: '#d32f2f'
+                                })
                               }
                             }}
                           />
@@ -822,6 +924,13 @@ export function PatientForm() {
                                 onChange={handleHospitalChange(hospital)}
                                 name={hospital}
                                 size="small"
+                                disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum')}
+                                sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
+                                  color: '#d32f2f',
+                                  '&.Mui-checked': {
+                                    color: '#d32f2f',
+                                  }
+                                } : undefined}
                               />
                             }
                             label={hospital}
@@ -831,7 +940,10 @@ export function PatientForm() {
                                 fontSize: '0.85rem',
                                 whiteSpace: 'nowrap',
                                 overflow: 'hidden',
-                                textOverflow: 'ellipsis'
+                                textOverflow: 'ellipsis',
+                                ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
+                                  color: '#d32f2f'
+                                })
                               }
                             }}
                           />
