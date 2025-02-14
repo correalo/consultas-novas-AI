@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
@@ -23,6 +23,8 @@ import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import MicIcon from '@mui/icons-material/Mic';
+import MicOffIcon from '@mui/icons-material/MicOff';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
 import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
@@ -420,6 +422,11 @@ export function PatientForm() {
 
   const [open, setOpen] = useState(true);
 
+  const [isListening, setIsListening] = useState(false);
+
+  const [recognition, setRecognition] = useState<any>(null);
+  const [silenceTimer, setSilenceTimer] = useState<any>(null);
+
   const calculateAge = (birthDate: string): string => {
     if (!birthDate) return '';
     const today = new Date();
@@ -576,6 +583,85 @@ export function PatientForm() {
     const normalizedProvider = provider.toLowerCase();
     return INSURANCE_SUBTYPES[normalizedProvider] || INSURANCE_SUBTYPES['default'];
   };
+
+  const formatDateTime = () => {
+    const now = new Date();
+    return now.toLocaleString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
+
+  const stopListening = () => {
+    setIsListening(false);
+    if (recognition) {
+      recognition.stop();
+    }
+    if (silenceTimer) {
+      clearTimeout(silenceTimer);
+      setSilenceTimer(null);
+    }
+  };
+
+  const startListening = () => {
+    if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
+      setIsListening(true);
+      
+      // @ts-ignore
+      const recognitionInstance = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
+      setRecognition(recognitionInstance);
+      
+      recognitionInstance.lang = 'pt-BR';
+      recognitionInstance.continuous = true;
+      recognitionInstance.interimResults = false;
+
+      recognitionInstance.onresult = (event: any) => {
+        const transcript = event.results[event.results.length - 1][0].transcript;
+        const dateTime = formatDateTime();
+        const formattedText = `[${dateTime}] ${transcript}`;
+        
+        setFormData(prev => ({
+          ...prev,
+          observations: prev.observations ? `${prev.observations}\n${formattedText}` : formattedText
+        }));
+
+        // Reinicia o timer quando há fala
+        if (silenceTimer) {
+          clearTimeout(silenceTimer);
+        }
+        setSilenceTimer(setTimeout(() => {
+          stopListening();
+        }, 2000));
+      };
+
+      recognitionInstance.onerror = () => {
+        stopListening();
+      };
+
+      recognitionInstance.onend = () => {
+        stopListening();
+      };
+
+      recognitionInstance.start();
+    } else {
+      alert('Seu navegador não suporta reconhecimento de voz.');
+    }
+  };
+
+  // Limpa o timer e recognition quando o componente é desmontado
+  useEffect(() => {
+    return () => {
+      if (silenceTimer) {
+        clearTimeout(silenceTimer);
+      }
+      if (recognition) {
+        recognition.stop();
+      }
+    };
+  }, []);
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -738,7 +824,19 @@ export function PatientForm() {
                     </IconButton>
                   </div>
                 </Grid>
-                <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
+                <Grid item xs={12} sm={2.25}>
+                  <TextField
+                    required
+                    fullWidth
+                    type="datetime-local"
+                    label="Data da Consulta"
+                    name="consultationDate"
+                    value={formData.consultationDate}
+                    onChange={handleTextChange}
+                    InputLabelProps={{ shrink: true }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={3.75} sx={{ display: 'flex', gap: 1 }}>
                   <TextField
                     required
                     fullWidth
@@ -786,18 +884,6 @@ export function PatientForm() {
                       <ForwardToInboxIcon sx={{ fontSize: '2rem' }} />
                     </IconButton>
                   </div>
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="datetime-local"
-                    label="Data da Consulta"
-                    name="consultationDate"
-                    value={formData.consultationDate}
-                    onChange={handleTextChange}
-                    InputLabelProps={{ shrink: true }}
-                  />
                 </Grid>
 
                 {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
@@ -962,6 +1048,20 @@ export function PatientForm() {
                     fullWidth
                     multiline
                     rows={4}
+                    InputProps={{
+                      endAdornment: (
+                        <IconButton
+                          onClick={isListening ? stopListening : startListening}
+                          sx={{
+                            color: isListening ? 'error.main' : 'primary.main',
+                            alignSelf: 'flex-start',
+                            mt: 1
+                          }}
+                        >
+                          {isListening ? <MicOffIcon /> : <MicIcon />}
+                        </IconButton>
+                      ),
+                    }}
                     sx={{
                       '& .MuiInputBase-root': {
                         maxHeight: '200px',
