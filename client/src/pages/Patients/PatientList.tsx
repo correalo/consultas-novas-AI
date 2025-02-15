@@ -67,11 +67,11 @@ export function PatientList() {
   };
 
   const handleEditPatient = (id: string) => {
-    navigate(`/patients/${id}/edit`);
+    navigate(`/patients/view/${id}`);
   };
 
   const handleViewPatient = (id: string) => {
-    navigate(`/patients/${id}`);
+    navigate(`/patients/view/${id}`);
   };
 
   const handleDeletePatient = (id: string) => {

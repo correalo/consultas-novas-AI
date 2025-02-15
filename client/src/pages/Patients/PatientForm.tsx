@@ -2,9 +2,7 @@ import { useState, useEffect } from 'react';
 import {
   Box,
   Button,
-  Container,
   Grid,
-  Paper,
   TextField,
   Typography,
   FormControl,
@@ -16,19 +14,15 @@ import {
   FormControlLabel,
   Checkbox,
   FormLabel,
-  IconButton,
-  Collapse
+  IconButton
 } from '@mui/material';
 import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
-import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
-import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
-import { grey } from '@mui/material/colors';
+import { useTheme, useMediaQuery } from '@mui/material';
 
 const HOSPITALS = [
   'Nenhum',
@@ -380,14 +374,19 @@ interface FormData {
   insuranceType: string;
   classification: string;
   profession: string;
-  followUpData: Record<string, any>;
   hospitals: string[];
   referral: string;
   observations: string;
   surgeryDate: string;
 }
 
-export function PatientForm() {
+interface PatientFormProps {
+  onClassificationChange?: (classification: string) => void;
+  standalone?: boolean;
+  readOnly?: boolean;
+}
+
+export function PatientForm({ onClassificationChange, standalone = true, readOnly = false }: PatientFormProps) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState<FormData>({
@@ -403,7 +402,6 @@ export function PatientForm() {
     insuranceType: '',
     classification: '',
     profession: '',
-    followUpData: {},
     hospitals: [],
     referral: '',
     observations: '',
@@ -420,12 +418,13 @@ export function PatientForm() {
     message: string;
   }>({ color: 'warning', message: '' });
 
-  const [open, setOpen] = useState(true);
-
   const [isListening, setIsListening] = useState(false);
 
   const [recognition, setRecognition] = useState<any>(null);
   const [silenceTimer, setSilenceTimer] = useState<any>(null);
+
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   const calculateAge = (birthDate: string): string => {
     if (!birthDate) return '';
@@ -550,6 +549,9 @@ export function PatientForm() {
         [name]: value,
         insuranceType: '', // Reset do tipo de plano
       }));
+    } else if (name === 'classification') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      onClassificationChange?.(value);
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -670,458 +672,442 @@ export function PatientForm() {
   };
 
   return (
-    <Container maxWidth="lg">
-      <Box sx={{ mt: 4, mb: 4 }}>
-        <Typography variant="h4" component="h1" sx={{ mb: 4 }}>
-          Novo Paciente
+    <Box>
+      {standalone && (
+        <Typography variant="h5" sx={{ mb: 3 }}>
+          {id ? 'Editar Paciente' : 'Novo Paciente'}
         </Typography>
+      )}
+      <form onSubmit={handleSubmit}>
+        <Box sx={{ 
+          p: 2, 
+          backgroundColor: readOnly ? '#f5f5f5' : '#e8e8e8',  
+          borderRadius: 1
+        }}>
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={1.0}>
+              <TextField
+                label="ID"
+                value={"123456789012"}
+                disabled
+                sx={{ 
+                  width: '100%',
+                  '& .MuiInputBase-input': {
+                    fontFamily: 'monospace',
+                    fontSize: '0.875rem'
+                  }
+                }}
+                InputProps={{
+                  readOnly: true,
+                }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <TextField
+                required
+                fullWidth
+                label="Nome"
+                name="name"
+                value={formData.name}
+                onChange={handleTextChange}
+                onBlur={handleNameBlur}
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid item xs={12} sm={0.98}>
+              <FormControl fullWidth required>
+                <InputLabel>Sexo</InputLabel>
+                <Select
+                  name="sex"
+                  value={formData.sex}
+                  label="Sexo"
+                  onChange={handleSelectChange}
+                  disabled={readOnly}
+                >
+                  <MenuItem value="M">M</MenuItem>
+                  <MenuItem value="F">F</MenuItem>
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                label="CPF"
+                name="cpf"
+                value={formData.cpf}
+                onChange={handleTextChange}
+                color={cpfStatus.color}
+                helperText={cpfStatus.message}
+                error={cpfStatus.color === 'error'}
+                inputProps={{
+                  maxLength: 14
+                }}
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                required
+                fullWidth
+                label="Indicação"
+                name="referral"
+                value={formData.referral}
+                onChange={handleTextChange}
+                placeholder="Quem indicou este paciente?"
+                disabled={readOnly}
+              />
+            </Grid>
 
-        <Paper 
-          sx={{ 
-            p: 3,
-            backgroundColor: grey[400],
-          }}
-        >
-          <form onSubmit={handleSubmit}>
-            <Box sx={{ 
-              p: 2, 
-              backgroundColor: '#e8e8e8',  
-              borderRadius: 1
-            }}>
-              <Grid container spacing={2}>
-                <Grid item xs={12} sm={1.0}>
-                  <TextField
-                    label="ID"
-                    value={"123456789012"}
-                    disabled
-                    sx={{ 
-                      width: '100%',
-                      '& .MuiInputBase-input': {
-                        fontFamily: 'monospace',
-                        fontSize: '0.875rem'
-                      }
-                    }}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Nome"
-                    name="name"
-                    value={formData.name}
-                    onChange={handleTextChange}
-                    onBlur={handleNameBlur}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={0.98}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Sexo</InputLabel>
-                    <Select
-                      name="sex"
-                      value={formData.sex}
-                      label="Sexo"
-                      onChange={handleSelectChange}
-                    >
-                      <MenuItem value="M">M</MenuItem>
-                      <MenuItem value="F">F</MenuItem>
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <TextField
-                    fullWidth
-                    label="CPF"
-                    name="cpf"
-                    value={formData.cpf}
-                    onChange={handleTextChange}
-                    color={cpfStatus.color}
-                    helperText={cpfStatus.message}
-                    error={cpfStatus.color === 'error'}
-                    inputProps={{
-                      maxLength: 14
-                    }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Indicação"
-                    name="referral"
-                    value={formData.referral}
-                    onChange={handleTextChange}
-                    placeholder="Quem indicou este paciente?"
-                  />
-                </Grid>
+            {/* Segunda linha: Data de Nascimento, Telefone, Email e Data da Consulta */}
+            <Grid item xs={12} sm={2}>
+              <TextField
+                required
+                fullWidth
+                type="date"
+                label="Data de Nascimento"
+                name="birthDate"
+                value={formData.birthDate}
+                onChange={handleTextChange}
+                InputLabelProps={{ shrink: true }}
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid item xs={12} sm={1}>
+              <TextField
+                fullWidth
+                label="Idade"
+                value={formData.age}
+                InputProps={{
+                  readOnly: true,
+                }}
+                InputLabelProps={{ shrink: true }}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                required
+                fullWidth
+                label="Celular"
+                name="phone"
+                value={formData.phone}
+                onChange={handleTextChange}
+                placeholder="(XX)XXXXXXXXX"
+                inputProps={{
+                  maxLength: 13
+                }}
+                sx={{ width: 'calc(100% - 64px)' }}
+                disabled={readOnly}
+              />
+              <div style={{ 
+                height: '56px', 
+                display: 'flex', 
+                alignItems: 'center'
+              }}>
+                <IconButton
+                  color="success"
+                  onClick={() => {
+                    const phoneNumber = formData.phone.replace(/\D/g, '');
+                    if (phoneNumber) {
+                      window.open(`https://wa.me/55${phoneNumber}`, '_blank');
+                    }
+                  }}
+                  sx={{
+                    backgroundColor: '#25D366',
+                    color: 'white',
+                    borderRadius: '4px',
+                    width: '56px',
+                    height: '56px',
+                    '&:hover': {
+                      backgroundColor: '#128C7E'
+                    }
+                  }}
+                  disabled={readOnly}
+                >
+                  <WhatsAppIcon sx={{ fontSize: '2rem' }} />
+                </IconButton>
+              </div>
+            </Grid>
+            <Grid item xs={12} sm={2.25}>
+              <TextField
+                required
+                fullWidth
+                type="datetime-local"
+                label="Data da Consulta"
+                name="consultationDate"
+                value={formData.consultationDate}
+                onChange={handleTextChange}
+                InputLabelProps={{ shrink: true }}
+                disabled={readOnly}
+              />
+            </Grid>
+            <Grid item xs={12} sm={3.75} sx={{ display: 'flex', gap: 1 }}>
+              <TextField
+                required
+                fullWidth
+                label="Email"
+                name="email"
+                value={formData.email}
+                onChange={handleTextChange}
+                color={emailStatus.color}
+                helperText={emailStatus.message}
+                error={emailStatus.color === 'error'}
+                sx={{
+                  width: 'calc(100% - 64px)',
+                  '& .MuiInputBase-input': {
+                    fontSize: '0.875rem',
+                    height: '23px',
+                    padding: '16.5px 14px'
+                  },
+                  '& .MuiInputBase-root': {
+                    height: '56px'
+                  }
+                }}
+                disabled={readOnly}
+              />
+              <div style={{ 
+                height: '56px', 
+                display: 'flex', 
+                alignItems: 'center'
+              }}>
+                <IconButton
+                  onClick={() => {
+                    if (formData.email) {
+                      window.open(`mailto:${formData.email}`, '_blank');
+                    }
+                  }}
+                  sx={{
+                    backgroundColor: '#1976d2',
+                    color: 'white',
+                    borderRadius: '4px',
+                    width: '56px',
+                    height: '56px',
+                    '&:hover': {
+                      backgroundColor: '#1565c0'
+                    }
+                  }}
+                  disabled={readOnly}
+                >
+                  <ForwardToInboxIcon sx={{ fontSize: '2rem' }} />
+                </IconButton>
+              </div>
+            </Grid>
 
-                {/* Segunda linha: Data de Nascimento, Telefone, Email e Data da Consulta */}
-                <Grid item xs={12} sm={2}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="date"
-                    label="Data de Nascimento"
-                    name="birthDate"
-                    value={formData.birthDate}
-                    onChange={handleTextChange}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={1}>
-                  <TextField
-                    fullWidth
-                    label="Idade"
-                    value={formData.age}
-                    InputProps={{
-                      readOnly: true,
-                    }}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={3} sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Celular"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleTextChange}
-                    placeholder="(XX)XXXXXXXXX"
-                    inputProps={{
-                      maxLength: 13
-                    }}
-                    sx={{ width: 'calc(100% - 64px)' }}
-                  />
-                  <div style={{ 
-                    height: '56px', 
-                    display: 'flex', 
-                    alignItems: 'center'
+            {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth required>
+                <InputLabel>Convênio</InputLabel>
+                <Select
+                  name="insuranceProvider"
+                  value={formData.insuranceProvider}
+                  onChange={handleSelectChange}
+                  label="Convênio"
+                  disabled={readOnly}
+                >
+                  {INSURANCE_PROVIDERS.map((provider) => (
+                    <MenuItem key={provider} value={provider.toLowerCase()}>
+                      {provider}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <InputLabel>Tipo de Plano</InputLabel>
+                <Select
+                  name="insuranceType"
+                  value={formData.insuranceType}
+                  label="Tipo de Plano"
+                  onChange={handleSelectChange}
+                  disabled={!formData.insuranceProvider || readOnly}
+                  MenuProps={{
+                    style: { maxHeight: 300 }
+                  }}
+                >
+                  {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
+                    <MenuItem key={subtype} value={subtype}>
+                      {subtype}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth required>
+                <InputLabel>Classificação</InputLabel>
+                <Select
+                  name="classification"
+                  value={formData.classification}
+                  onChange={handleSelectChange}
+                  label="Classificação"
+                  disabled={readOnly}
+                >
+                  {CLASSIFICATIONS.map((classification) => (
+                    <MenuItem key={classification} value={classification.toLowerCase()}>
+                      {classification}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+            <Grid item xs={12} sm={3}>
+              <FormControl fullWidth>
+                <InputLabel>Profissão</InputLabel>
+                <Select
+                  name="profession"
+                  value={formData.profession}
+                  onChange={handleSelectChange}
+                  label="Profissão"
+                  disabled={readOnly}
+                >
+                  {PROFESSIONS.map((profession) => (
+                    <MenuItem key={profession} value={profession}>
+                      {profession}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Grid>
+
+            {/* Hospitais */}
+            <Grid item xs={12}>
+              <FormControl component="fieldset" sx={{ width: '100%' }}>
+                <FormLabel component="legend">Hospitais Possíveis</FormLabel>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <FormGroup sx={{ 
+                    '& .MuiFormControlLabel-root': { margin: 0 },
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? 1 : 0
                   }}>
-                    <IconButton
-                      color="success"
-                      onClick={() => {
-                        const phoneNumber = formData.phone.replace(/\D/g, '');
-                        if (phoneNumber) {
-                          window.open(`https://wa.me/55${phoneNumber}`, '_blank');
-                        }
-                      }}
-                      sx={{
-                        backgroundColor: '#25D366',
-                        color: 'white',
-                        borderRadius: '4px',
-                        width: '56px',
-                        height: '56px',
-                        '&:hover': {
-                          backgroundColor: '#128C7E'
-                        }
-                      }}
-                    >
-                      <WhatsAppIcon sx={{ fontSize: '2rem' }} />
-                    </IconButton>
-                  </div>
-                </Grid>
-                <Grid item xs={12} sm={2.25}>
-                  <TextField
-                    required
-                    fullWidth
-                    type="datetime-local"
-                    label="Data da Consulta"
-                    name="consultationDate"
-                    value={formData.consultationDate}
-                    onChange={handleTextChange}
-                    InputLabelProps={{ shrink: true }}
-                  />
-                </Grid>
-                <Grid item xs={12} sm={3.75} sx={{ display: 'flex', gap: 1 }}>
-                  <TextField
-                    required
-                    fullWidth
-                    label="Email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleTextChange}
-                    color={emailStatus.color}
-                    helperText={emailStatus.message}
-                    error={emailStatus.color === 'error'}
-                    sx={{
-                      width: 'calc(100% - 64px)',
-                      '& .MuiInputBase-input': {
-                        fontSize: '0.875rem',
-                        height: '23px',
-                        padding: '16.5px 14px'
-                      },
-                      '& .MuiInputBase-root': {
-                        height: '56px'
-                      }
-                    }}
-                  />
-                  <div style={{ 
-                    height: '56px', 
-                    display: 'flex', 
-                    alignItems: 'center'
-                  }}>
-                    <IconButton
-                      onClick={() => {
-                        if (formData.email) {
-                          window.open(`mailto:${formData.email}`, '_blank');
-                        }
-                      }}
-                      sx={{
-                        backgroundColor: '#1976d2',
-                        color: 'white',
-                        borderRadius: '4px',
-                        width: '56px',
-                        height: '56px',
-                        '&:hover': {
-                          backgroundColor: '#1565c0'
-                        }
-                      }}
-                    >
-                      <ForwardToInboxIcon sx={{ fontSize: '2rem' }} />
-                    </IconButton>
-                  </div>
-                </Grid>
-
-                {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
-                <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Convênio</InputLabel>
-                    <Select
-                      name="insuranceProvider"
-                      value={formData.insuranceProvider}
-                      onChange={handleSelectChange}
-                      label="Convênio"
-                    >
-                      {INSURANCE_PROVIDERS.map((provider) => (
-                        <MenuItem key={provider} value={provider.toLowerCase()}>
-                          {provider}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth>
-                    <InputLabel>Tipo de Plano</InputLabel>
-                    <Select
-                      name="insuranceType"
-                      value={formData.insuranceType}
-                      label="Tipo de Plano"
-                      onChange={handleSelectChange}
-                      disabled={!formData.insuranceProvider}
-                      MenuProps={{
-                        style: { maxHeight: 300 }
-                      }}
-                    >
-                      {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
-                        <MenuItem key={subtype} value={subtype}>
-                          {subtype}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth required>
-                    <InputLabel>Classificação</InputLabel>
-                    <Select
-                      name="classification"
-                      value={formData.classification}
-                      onChange={handleSelectChange}
-                      label="Classificação"
-                    >
-                      {CLASSIFICATIONS.map((classification) => (
-                        <MenuItem key={classification} value={classification.toLowerCase()}>
-                          {classification}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-                <Grid item xs={12} sm={3}>
-                  <FormControl fullWidth>
-                    <InputLabel>Profissão</InputLabel>
-                    <Select
-                      name="profession"
-                      value={formData.profession}
-                      onChange={handleSelectChange}
-                      label="Profissão"
-                    >
-                      {PROFESSIONS.map((profession) => (
-                        <MenuItem key={profession} value={profession}>
-                          {profession}
-                        </MenuItem>
-                      ))}
-                    </Select>
-                  </FormControl>
-                </Grid>
-
-                {/* Hospitais */}
-                <Grid item xs={12}>
-                  <FormControl component="fieldset" sx={{ width: '100%' }}>
-                    <FormLabel component="legend">Hospitais Possíveis</FormLabel>
-                    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                      <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
-                        {HOSPITALS_ROW1.map((hospital) => (
-                          <FormControlLabel
-                            key={hospital}
-                            control={
-                              <Checkbox
-                                checked={formData.hospitals.includes(hospital)}
-                                onChange={handleHospitalChange(hospital)}
-                                name={hospital}
-                                size="small"
-                                disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum')}
-                                sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
-                                  color: '#d32f2f',
-                                  '&.Mui-checked': {
-                                    color: '#d32f2f',
-                                  }
-                                } : undefined}
-                              />
-                            }
-                            label={hospital}
-                            sx={{
-                              width: '20%',
-                              '& .MuiTypography-root': {
-                                fontSize: '0.85rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
-                                  color: '#d32f2f'
-                                })
+                    {HOSPITALS_ROW1.map((hospital) => (
+                      <FormControlLabel
+                        key={hospital}
+                        control={
+                          <Checkbox
+                            checked={formData.hospitals.includes(hospital)}
+                            onChange={handleHospitalChange(hospital)}
+                            name={hospital}
+                            size="small"
+                            disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum') || readOnly}
+                            sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
+                              color: '#d32f2f',
+                              '&.Mui-checked': {
+                                color: '#d32f2f',
                               }
-                            }}
+                            } : undefined}
                           />
-                        ))}
-                      </FormGroup>
-                      <FormGroup row sx={{ '& .MuiFormControlLabel-root': { margin: 0 } }}>
-                        {HOSPITALS_ROW2.map((hospital) => (
-                          <FormControlLabel
-                            key={hospital}
-                            control={
-                              <Checkbox
-                                checked={formData.hospitals.includes(hospital)}
-                                onChange={handleHospitalChange(hospital)}
-                                name={hospital}
-                                size="small"
-                                disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum')}
-                                sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
-                                  color: '#d32f2f',
-                                  '&.Mui-checked': {
-                                    color: '#d32f2f',
-                                  }
-                                } : undefined}
-                              />
-                            }
-                            label={hospital}
-                            sx={{
-                              width: '20%',
-                              '& .MuiTypography-root': {
-                                fontSize: '0.85rem',
-                                whiteSpace: 'nowrap',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
-                                  color: '#d32f2f'
-                                })
-                              }
-                            }}
-                          />
-                        ))}
-                      </FormGroup>
-                    </Box>
-                  </FormControl>
-                </Grid>
-
-                <Grid item xs={12}>
-                  <TextField
-                    label="Observações"
-                    name="observations"
-                    value={formData.observations}
-                    onChange={handleTextChange}
-                    fullWidth
-                    multiline
-                    rows={4}
-                    InputProps={{
-                      endAdornment: (
-                        <IconButton
-                          onClick={isListening ? stopListening : startListening}
-                          sx={{
-                            color: isListening ? 'error.main' : 'primary.main',
-                            alignSelf: 'flex-start',
-                            mt: 1
-                          }}
-                        >
-                          {isListening ? <MicOffIcon /> : <MicIcon />}
-                        </IconButton>
-                      ),
-                    }}
-                    sx={{
-                      '& .MuiInputBase-root': {
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                      }
-                    }}
-                  />
-                </Grid>
-
-                <Grid item xs={12}>
-                  <Box sx={{ p: 2 }}>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 2 }}>
-                      <Typography variant="h6" color="primary">
-                        Acompanhamento
-                      </Typography>
-                      <IconButton
-                        aria-label={open ? 'Recolher tabela' : 'Expandir tabela'}
-                        size="small"
-                        onClick={() => setOpen(!open)}
-                      >
-                        {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
-                      </IconButton>
-                    </Box>
-                    <Collapse in={open} timeout="auto" unmountOnExit>
-                      <FollowUpTable
-                        patientId={id || ''}
-                        followUp={formData.followUpData}
-                        surgeryDate={formData.surgeryDate}
-                        classification={formData.classification}
-                        onSurgeryDateChange={(date) => setFormData(prev => ({ ...prev, surgeryDate: date }))}
-                        onDataChange={(data) => {
-                          setFormData(prev => ({
-                            ...prev,
-                            followUpData: data.followUp
-                          }));
+                        }
+                        label={hospital}
+                        sx={{
+                          width: isMobile ? '100%' : '20%',
+                          '& .MuiTypography-root': {
+                            fontSize: '0.85rem',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
+                              color: '#d32f2f'
+                            })
+                          }
                         }}
                       />
-                    </Collapse>
-                  </Box>
-                </Grid>
+                    ))}
+                  </FormGroup>
+                  <FormGroup sx={{ 
+                    '& .MuiFormControlLabel-root': { margin: 0 },
+                    flexDirection: isMobile ? 'column' : 'row',
+                    gap: isMobile ? 1 : 0
+                  }}>
+                    {HOSPITALS_ROW2.map((hospital) => (
+                      <FormControlLabel
+                        key={hospital}
+                        control={
+                          <Checkbox
+                            checked={formData.hospitals.includes(hospital)}
+                            onChange={handleHospitalChange(hospital)}
+                            name={hospital}
+                            size="small"
+                            disabled={hospital !== 'Nenhum' && formData.hospitals.includes('Nenhum') || readOnly}
+                            sx={hospital === 'Nenhum' && formData.hospitals.includes(hospital) ? {
+                              color: '#d32f2f',
+                              '&.Mui-checked': {
+                                color: '#d32f2f',
+                              }
+                            } : undefined}
+                          />
+                        }
+                        label={hospital}
+                        sx={{
+                          width: isMobile ? '100%' : '20%',
+                          '& .MuiTypography-root': {
+                            fontSize: '0.85rem',
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            ...(hospital === 'Nenhum' && formData.hospitals.includes(hospital) && {
+                              color: '#d32f2f'
+                            })
+                          }
+                        }}
+                      />
+                    ))}
+                  </FormGroup>
+                </Box>
+              </FormControl>
+            </Grid>
 
-                {/* Botões */}
-                <Grid item xs={12}>
-                  <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
-                    <Button
-                      variant="outlined"
-                      onClick={() => navigate('/patients')}
+            <Grid item xs={12}>
+              <TextField
+                label="Observações"
+                name="observations"
+                value={formData.observations}
+                onChange={handleTextChange}
+                fullWidth
+                multiline
+                rows={4}
+                InputProps={{
+                  endAdornment: (
+                    <IconButton
+                      onClick={isListening ? stopListening : startListening}
+                      sx={{
+                        color: isListening ? 'error.main' : 'primary.main',
+                        alignSelf: 'flex-start',
+                        mt: 1
+                      }}
+                      disabled={readOnly}
                     >
-                      Cancelar
-                    </Button>
-                    <Button type="submit" variant="contained" color="primary">
-                      Salvar
-                    </Button>
-                  </Box>
-                </Grid>
-              </Grid>
-            </Box>
-          </form>
-        </Paper>
-      </Box>
-    </Container>
+                      {isListening ? <MicOffIcon /> : <MicIcon />}
+                    </IconButton>
+                  ),
+                }}
+                sx={{
+                  '& .MuiInputBase-root': {
+                    maxHeight: '200px',
+                    overflowY: 'auto',
+                  }
+                }}
+                disabled={readOnly}
+              />
+            </Grid>
+
+            {/* Botões */}
+            <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 2, justifyContent: 'flex-end' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => navigate('/patients')}
+                  disabled={readOnly}
+                >
+                  Cancelar
+                </Button>
+                <Button type="submit" variant="contained" color="primary" disabled={readOnly}>
+                  Salvar
+                </Button>
+              </Box>
+            </Grid>
+          </Grid>
+        </Box>
+      </form>
+    </Box>
   );
 }
