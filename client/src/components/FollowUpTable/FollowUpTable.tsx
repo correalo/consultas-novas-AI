@@ -149,7 +149,7 @@ export function FollowUpTable({
   return (
     <Paper sx={{ p: 2 }}>
       <Box sx={{ mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        <Box sx={{ display: 'flex', alignItems: 'center' }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
           <IconButton
             aria-label="expand row"
             size="small"
@@ -157,22 +157,23 @@ export function FollowUpTable({
           >
             {isExpanded ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
           </IconButton>
-          <Typography variant="h6" component="div" sx={{ ml: 1 }}>
+          <Typography variant="h6" component="div">
             Acompanhamento
           </Typography>
+          <TextField
+            label="Data da Cirurgia"
+            type="date"
+            value={surgeryDate}
+            onChange={(e) => {
+              onSurgeryDateChange?.(e.target.value);
+            }}
+            InputLabelProps={{ shrink: true }}
+            size="small"
+            sx={{ width: 200 }}
+            disabled={!isEnabled}
+          />
         </Box>
-        <TextField
-          label="Data da Cirurgia"
-          type="date"
-          value={surgeryDate}
-          onChange={(e) => {
-            onSurgeryDateChange?.(e.target.value);
-          }}
-          InputLabelProps={{ shrink: true }}
-          size="small"
-          sx={{ width: 200 }}
-          disabled={!isEnabled}
-        />
+        <Box />
       </Box>
 
       <Collapse in={isExpanded}>

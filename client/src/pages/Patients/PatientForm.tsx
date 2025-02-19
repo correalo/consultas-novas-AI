@@ -14,12 +14,14 @@ import {
   FormControlLabel,
   Checkbox,
   FormLabel,
-  IconButton
+  IconButton,
+  InputAdornment
 } from '@mui/material';
 import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
 import MicIcon from '@mui/icons-material/Mic';
 import MicOffIcon from '@mui/icons-material/MicOff';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
 import { useTheme, useMediaQuery } from '@mui/material';
@@ -77,49 +79,6 @@ const PROFESSIONS = [
   'TÉCNICO(A)',
   'VENDEDOR(A)',
   'OUTROS'
-] as const;
-
-const INSURANCE_PROVIDERS = [
-  'ABET',
-  'ALLIANZ',
-  'AMAFRESP',
-  'AMIL',
-  'BRADESCO',
-  'CABESP',
-  'CARE PLUS',
-  'CASSI',
-  'CLASSES LABORIOSAS',
-  'CUIDAR ME',
-  'ECONOMUS',
-  'EMBRATEL',
-  'FUNDACAO CESP',
-  'GAMA',
-  'GEAP',
-  'GOLDEN CROSS',
-  'GREEN LINE',
-  'INTERMÉDICA',
-  'ITAU',
-  'MARITIMA',
-  'MEDIAL',
-  'MEDISERVICE',
-  'METRUS',
-  'NOTRE DAME',
-  'OMINT',
-  'ONE HEALTH',
-  'PARTICULAR',
-  'PORTO SEGURO',
-  'POSTAL SAUDE',
-  'SABESP REV',
-  'SAUDE CAIXA',
-  'SOMPO SAÚDE',
-  'SULAMERICA',
-  'TRASMONTANO',
-  'UNIMED',
-  'UNIMED CENTRAL NACIONAL',
-  'UNIMED FESP',
-  'UNIMED GUARULHOS',
-  'UNIMED SEGUROS',
-  'VOLKSWAGEN',
 ] as const;
 
 const INSURANCE_SUBTYPES: { [key: string]: string[] } = {
@@ -382,11 +341,17 @@ interface FormData {
 
 interface PatientFormProps {
   onClassificationChange?: (classification: string) => void;
+  onSurgeryDateChange?: (date: string) => void;
   standalone?: boolean;
   readOnly?: boolean;
 }
 
-export function PatientForm({ onClassificationChange, standalone = true, readOnly = false }: PatientFormProps) {
+export function PatientForm({ 
+  onClassificationChange, 
+  onSurgeryDateChange,
+  standalone = true, 
+  readOnly = false 
+}: PatientFormProps) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState<FormData>({
@@ -519,6 +484,12 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
         [name]: value,
         age,
       }));
+    } else if (name === 'surgeryDate') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
+      onSurgeryDateChange?.(value);
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -598,7 +569,6 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
   };
 
   const stopListening = () => {
-    setIsListening(false);
     if (recognition) {
       recognition.stop();
     }
@@ -606,18 +576,17 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
       clearTimeout(silenceTimer);
       setSilenceTimer(null);
     }
+    setIsListening(false);
+    setRecognition(null);
   };
 
   const startListening = () => {
     if ('webkitSpeechRecognition' in window || 'SpeechRecognition' in window) {
-      setIsListening(true);
-      
       // @ts-ignore
       const recognitionInstance = new (window.webkitSpeechRecognition || window.SpeechRecognition)();
-      setRecognition(recognitionInstance);
       
       recognitionInstance.lang = 'pt-BR';
-      recognitionInstance.continuous = true;
+      recognitionInstance.continuous = false; // Mudado para false para parar após cada reconhecimento
       recognitionInstance.interimResults = false;
 
       recognitionInstance.onresult = (event: any) => {
@@ -630,23 +599,34 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
           observations: prev.observations ? `${prev.observations}\n${formattedText}` : formattedText
         }));
 
-        // Reinicia o timer quando há fala
+        // Inicia o timer de silêncio
         if (silenceTimer) {
           clearTimeout(silenceTimer);
         }
-        setSilenceTimer(setTimeout(() => {
-          stopListening();
-        }, 2000));
-      };
-
-      recognitionInstance.onerror = () => {
-        stopListening();
+        
+        const newTimer = setTimeout(() => {
+          stopListening(); // Para a gravação completamente após 2 segundos
+        }, 2000);
+        
+        setSilenceTimer(newTimer);
       };
 
       recognitionInstance.onend = () => {
+        // Se ainda estiver escutando e não for por causa do timer de silêncio
+        if (isListening && !silenceTimer) {
+          startListening(); // Reinicia a gravação
+        } else {
+          stopListening(); // Para completamente
+        }
+      };
+
+      recognitionInstance.onerror = (event: any) => {
+        console.error('Erro no reconhecimento:', event.error);
         stopListening();
       };
 
+      setRecognition(recognitionInstance);
+      setIsListening(true);
       recognitionInstance.start();
     } else {
       alert('Seu navegador não suporta reconhecimento de voz.');
@@ -741,6 +721,13 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
                 error={cpfStatus.color === 'error'}
                 inputProps={{
                   maxLength: 14
+                }}
+                InputProps={{
+                  endAdornment: cpfStatus.color === 'success' ? (
+                    <InputAdornment position="end">
+                      <CheckCircleIcon color="success" />
+                    </InputAdornment>
+                  ) : null
                 }}
                 disabled={readOnly}
               />
@@ -862,6 +849,13 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
                     height: '56px'
                   }
                 }}
+                InputProps={{
+                  endAdornment: emailStatus.color === 'success' ? (
+                    <InputAdornment position="end">
+                      <CheckCircleIcon color="success" />
+                    </InputAdornment>
+                  ) : null
+                }}
                 disabled={readOnly}
               />
               <div style={{ 
@@ -903,11 +897,20 @@ export function PatientForm({ onClassificationChange, standalone = true, readOnl
                   label="Convênio"
                   disabled={readOnly}
                 >
-                  {INSURANCE_PROVIDERS.map((provider) => (
-                    <MenuItem key={provider} value={provider.toLowerCase()}>
-                      {provider}
-                    </MenuItem>
-                  ))}
+                  <MenuItem value="">
+                    <em>Selecione</em>
+                  </MenuItem>
+                  <MenuItem value="Particular">Particular</MenuItem>
+                  <MenuItem value="Bradesco">Bradesco</MenuItem>
+                  <MenuItem value="SulAmérica">SulAmérica</MenuItem>
+                  <MenuItem value="Amil">Amil</MenuItem>
+                  <MenuItem value="Cassi">Cassi</MenuItem>
+                  <MenuItem value="Golden Cross">Golden Cross</MenuItem>
+                  <MenuItem value="Mediservice">Mediservice</MenuItem>
+                  <MenuItem value="Notre Dame">Notre Dame</MenuItem>
+                  <MenuItem value="Petrobras">Petrobras</MenuItem>
+                  <MenuItem value="Porto Seguro">Porto Seguro</MenuItem>
+                  <MenuItem value="Unimed">Unimed</MenuItem>
                 </Select>
               </FormControl>
             </Grid>

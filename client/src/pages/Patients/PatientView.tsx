@@ -43,9 +43,14 @@ export function PatientView() {
     '11 anos': {}
   });
   const [classification, setClassification] = useState<string>('');
+  const [surgeryDate, setSurgeryDate] = useState<string>('');
 
   const handleFollowUpChange = (data: { patientId: string; followUp: Record<Period, FollowUpData> }) => {
     setFollowUp(data.followUp);
+  };
+
+  const handleSurgeryDateChange = (date: string) => {
+    setSurgeryDate(date);
   };
 
   const handleClassificationChange = (newClassification: string) => {
@@ -136,6 +141,7 @@ export function PatientView() {
       <Paper sx={{ p: 3 }}>
         <PatientForm 
           onClassificationChange={handleClassificationChange} 
+          onSurgeryDateChange={handleSurgeryDateChange}
           standalone={false}
           readOnly={!isEditing}
         />
@@ -146,7 +152,9 @@ export function PatientView() {
           patientId={id || ''} 
           followUp={followUp}
           classification={classification}
+          surgeryDate={surgeryDate}
           onDataChange={handleFollowUpChange}
+          onSurgeryDateChange={handleSurgeryDateChange}
           readOnly={!isEditing}
         />
       </Paper>
