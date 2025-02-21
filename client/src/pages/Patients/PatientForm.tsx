@@ -105,210 +105,64 @@ const INSURANCE_SUBTYPES: { [key: string]: string[] } = {
     'AMIL ONE S1500',
     'AMIL ONE S2500',
     'AMIL OPCAO M22',
-    'AMIL SANTA PAULA',
-    'AMIL S40',
-    'AMIL S80',
-    'AMIL S250',
-    'AMIL S350',
-    'AMIL S450',
-    'AMIL S580',
-    'AMIL S750'
+    'AMIL SANTA PAULA'
   ],
-  'default': [
-    'ABSOLUTO',
-    'ACESSO IV',
-    'ADVANCE 600',
-    'ADVANCE 700',
-    'ADVANCE 800',
-    'AGREGADO',
-    'AMPLA COLETIVO',
-    'ASSOCIADOS ATIVOS',
-    'BASICO',
-    'BASICO 10',
-    'BETA',
-    'BLUE III',
-    'BLUE IV',
-    'BLUE 300',
-    'BLUE 300 PLUS',
-    'BLUE 400',
-    'BLUE 400 PLUS',
-    'BLUE 500',
-    'BLUE 500 PLUS',
-    'BLUE 600',
-    'BLUE 600 PLUS',
-    'BLUE 700',
-    'BLUE 800',
-    'BLUE EXECUTIVO',
-    'BRANCO',
-    'BRANCO SL',
-    'BRANCO 100',
-    'BRANCO 150',
-    'BRONZE',
-    'BRONZE I',
-    'BRONZE TOP',
-    'CABESP FAMILIA',
-    'CELEBRITY',
-    'CENTRAL NACIONAL',
-    'CLASS 620 E',
-    'CLASS 620 A',
-    'CLASS 640 A',
-    'CLASSICO',
-    'COMPLETO',
-    'CORPORATIVO COMPLETO',
-    'CORREIOS SAUDE',
-    'CRISTAL I',
-    'DIAMANTE I',
-    'DIAMANTE I 876',
-    'DINAMICO',
-    'DSP CLINIC',
-    'DSP PLENA',
-    'DIX 10',
-    'DIX ORIENTADOR',
-    'DIX 100',
-    'EFETIVO IV',
-    'ELETROPAULO',
-    'ESSENCIAL',
-    'ESSENCIAL PLUS',
-    'ESPECIAL',
-    'ESPECIAL I',
-    'ESPECIAL II',
-    'ESPECIAL III',
-    'ESPECIAL 100',
-    'ESTILO I',
-    'ESTILO III',
-    'EXATO',
-    'EXCELLENCE',
-    'EXECUTIVE',
-    'EXECUTIVO',
-    'EXCLUSIVO',
-    'FAMILIA',
-    'FAMILA AGREGADO',
-    'FESP',
-    'FIT',
-    'FLEX',
-    'GREEN 211',
-    'H2L2R2ED',
-    'H3L2',
-    'IDEAL ENFERMARIA',
-    'INFINITY 1000',
-    'INTEGRADA',
-    'LIDER',
-    'LIFE STD',
-    'LT3',
-    'LT4',
-    'MASTER',
-    'MASTER I',
-    'MASTER II',
-    'MASTER III',
-    'MASTER IV',
-    'MAX 250',
-    'MAX 300',
-    'MAX 350',
-    'MAX 400',
-    'MAXIMA',
-    'MAXIMO',
-    'MEDIAL 200',
-    'MEDIAL CLASS 620',
-    'MEDIAL 31',
-    'MEDIAL 400',
-    'MEDIAL 840 A',
-    'MEDIAL ESTRELAS 31',
-    'MEDIAL EXECUTIVE PLUS',
-    'MEDIAL INTER II NAC PJCE',
-    'MEDIAL GOL',
-    'MEDIAL IDEAL 420 A',
-    'MEDIAL ORIENTADOR CLASS 30',
-    'MEDIAL PLENO II',
-    'MEDIAL PREMIUM 840A',
-    'MEDICUS M22',
-    'MEDICUS 122',
-    'MELHOR',
-    'MS',
-    'NDS 111',
-    'NDS 126',
-    'NDS 127',
-    'NDS 130',
-    'NDS 140',
-    'NDS 141',
-    'NDS 161',
-    'ONE BLACK T2',
-    'ONE BLACK T3',
-    'ONE 2000',
-    'OPCAO M22',
-    'OPCAO 122',
-    'ORIGINAL',
-    'OSWALDO CRUZ 100',
-    'OURO',
-    'OURO I',
-    'OURO III',
-    'OURO IV',
-    'OURO MAIS Q',
-    'OURO MAX Q',
-    'PADRAO',
-    'PLENO',
-    'PLENO II 920',
-    'PLUS',
-    'PME COMPACTO',
-    'PORTO MED I',
-    'PRATA',
-    'PRATA BRONZE COPAR Q',
-    'PRATA E MAIS',
-    'PRATA MAIS Q',
-    'PRATA I',
-    'PRATA TOP',
-    'PREMIUM',
-    'PREMIUM TOP',
-    'PREMIUM 800',
-    'PREMIUM 900',
-    'QUALITE',
-    'REDE 300',
-    'REFE EFETIVO',
-    'REDE EFETIVO III',
-    'REDE EFETIVO IV',
-    'REDE HSC IDEAL',
-    'REDE HSC NACIONAL',
-    'REDE LIVRE ESCOLHA',
-    'REDE PERFIL SP',
-    'REDE PERSONAL IV',
-    'REDE PREFERENCIAL',
-    'REDE PREFERENCIAL PLUS',
-    'REDE INTERNACIONAL',
-    'REDE NACIONAL INDIVIDUAL',
-    'REDE NACIONAL EMPRESARIAL',
-    'REDE NACIONAL EMPRESARIAL SPG',
-    'REDE NACIONAL ESPECIAL',
+  'bradesco': [
+    'NACIONAL FLEX',
+    'NACIONAL PLUS',
+    'NACIONAL TOP',
+    'SAUDE TOP NACIONAL',
+    'SAUDE EFETIVO III',
+    'SAUDE EFETIVO II',
+    'SAUDE EFETIVO I',
     'REDE NACIONAL FLEX',
-    'REDE NACIONAL FLEX II',
     'REDE NACIONAL PLUS',
-    'REDE PERSONAL VI',
-    'REDE SCANIA',
-    'REDE SIEMENS',
-    'REGIONAL SAUDE CAIXA ATIVOS',
-    'SELETO I',
-    'SENIOR I',
-    'SENIOR II 920',
-    'SKILL',
-    'SMART 200',
-    'SMART 300',
-    'SMART 400',
-    'SMART 500',
-    'SMART 600',
-    'STANDARD',
-    'SUPERIEUR',
-    'SUPERIOR NACIONAL',
-    'SUPREMO S750',
-    'UNIPLAN INTEGRADA',
-    'UNIPLAN PADRÃO',
-    'UNIPLAN SUPREMO',
-    'UNIPLAN UP OURO',
-    'UNIPLAN UP BRONZE',
-    'UNIPLAN',
-    'UNIPLAN NEW PRATA',
-    'VERSATIL',
-    'VITA',
-    'UNIPLAN ESPECIAL',
-    'UNIPLAN MASTER',
-    'AMIL'
+    'REDE NACIONAL TOP',
+    'REDE PREFERENCIAL',
+    'REDE PREFERENCIAL PLUS'
+  ],
+  'sulamerica': [
+    'BASICO 10',
+    'BASICO 20',
+    'ESPECIAL 100',
+    'EXECUTIVO',
+    'PRESTIGE',
+    'CLASSICO',
+    'EXECUTIVO PLUS',
+    'PRESTIGE PLUS'
+  ],
+  'unimed': [
+    'UNIMED ALPHA',
+    'UNIMED BETA',
+    'UNIMED DELTA',
+    'UNIMED OMEGA',
+    'UNIMED FESP',
+    'UNIMED GUARULHOS',
+    'UNIMED SEGUROS'
+  ],
+  'cassi': [
+    'PLANO ASSOCIADOS',
+    'PLANO FAMILIA'
+  ],
+  'notredame': [
+    'NOTREDAME BASICO',
+    'NOTREDAME PLUS',
+    'NOTREDAME PREMIUM'
+  ],
+  'mediservice': [
+    'MEDISERVICE BASICO',
+    'MEDISERVICE PLUS',
+    'MEDISERVICE PREMIUM'
+  ],
+  'goldencross': [
+    'GOLDEN CROSS BASICO',
+    'GOLDEN CROSS PLUS',
+    'GOLDEN CROSS PREMIUM'
+  ],
+  'portoseguro': [
+    'PORTO SEGURO BASICO',
+    'PORTO SEGURO PLUS',
+    'PORTO SEGURO PREMIUM'
   ]
 };
 
@@ -508,12 +362,21 @@ export function PatientForm({
     const { name, value } = e.target;
     
     if (name === 'insuranceProvider') {
-      // Limpa o tipo de plano quando muda o convênio
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-        insuranceType: '', // Reset do tipo de plano
-      }));
+      if (value === 'Particular') {
+        // Se for Particular, define o subtipo como Particular
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          insuranceType: 'Particular',
+        }));
+      } else {
+        // Para outros convênios, limpa o tipo de plano
+        setFormData((prev) => ({
+          ...prev,
+          [name]: value,
+          insuranceType: '', // Reset do tipo de plano
+        }));
+      }
     } else if (name === 'classification') {
       setFormData((prev) => ({ ...prev, [name]: value }));
       onClassificationChange?.(value);
@@ -547,8 +410,24 @@ export function PatientForm({
   };
 
   const getInsuranceSubtypes = (provider: string) => {
-    const normalizedProvider = provider.toLowerCase();
-    return INSURANCE_SUBTYPES[normalizedProvider] || INSURANCE_SUBTYPES['default'];
+    if (!provider) return [];
+    if (provider === 'Particular') return ['Particular'];
+    
+    // Converte o nome do provedor para minúsculo, remove acentos e espaços
+    const normalizedProvider = provider.toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '');
+    
+    // Converte nomes específicos
+    const providerMap: { [key: string]: string } = {
+      'goldencross': 'goldencross',
+      'portoseguro': 'portoseguro',
+      'notredame': 'notredame'
+    };
+    
+    const mappedProvider = providerMap[normalizedProvider] || normalizedProvider;
+    return INSURANCE_SUBTYPES[mappedProvider] || [];
   };
 
   const formatDateTime = () => {
@@ -643,18 +522,6 @@ export function PatientForm({
     event.preventDefault();
     // TODO: Implement save logic
     navigate('/patients');
-  };
-
-  const handlePasteWhatsApp = async () => {
-    try {
-      const text = await navigator.clipboard.readText();
-      setFormData(prev => ({
-        ...prev,
-        whatsappLog: text
-      }));
-    } catch (err) {
-      console.error('Falha ao acessar a área de transferência:', err);
-    }
   };
 
   return (
@@ -929,10 +796,10 @@ export function PatientForm({
                   label="Tipo de Plano"
                   onChange={handleSelectChange}
                   disabled={!formData.insuranceProvider || readOnly}
-                  MenuProps={{
-                    style: { maxHeight: 300 }
-                  }}
                 >
+                  <MenuItem value="">
+                    <em>Selecione</em>
+                  </MenuItem>
                   {getInsuranceSubtypes(formData.insuranceProvider).map((subtype) => (
                     <MenuItem key={subtype} value={subtype}>
                       {subtype}
@@ -1065,41 +932,6 @@ export function PatientForm({
               </FormControl>
             </Grid>
 
-            <Grid item xs={12}>
-              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
-                <TextField
-                  fullWidth
-                  label="Log WhatsApp"
-                  name="whatsappLog"
-                  value={formData.whatsappLog}
-                  onChange={handleTextChange}
-                  multiline
-                  rows={6}
-                  placeholder="Cole aqui a conversa do WhatsApp..."
-                  disabled={readOnly}
-                  sx={{
-                    '& .MuiInputBase-root': {
-                      fontFamily: 'monospace',
-                      fontSize: '0.9rem'
-                    }
-                  }}
-                />
-                <IconButton 
-                  onClick={handlePasteWhatsApp}
-                  disabled={readOnly}
-                  sx={{ 
-                    mt: 1,
-                    backgroundColor: 'primary.main',
-                    color: 'white',
-                    '&:hover': {
-                      backgroundColor: 'primary.dark',
-                    }
-                  }}
-                >
-                  <WhatsAppIcon />
-                </IconButton>
-              </Box>
-            </Grid>
             <Grid item xs={12}>
               <TextField
                 fullWidth
