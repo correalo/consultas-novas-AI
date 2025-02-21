@@ -370,7 +370,7 @@ export function PatientForm({
     hospitals: [],
     referral: '',
     observations: '',
-    surgeryDate: '',
+    surgeryDate: ''
   });
 
   const [cpfStatus, setCpfStatus] = useState<{
@@ -484,12 +484,6 @@ export function PatientForm({
         [name]: value,
         age,
       }));
-    } else if (name === 'surgeryDate') {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-      onSurgeryDateChange?.(value);
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -649,6 +643,18 @@ export function PatientForm({
     event.preventDefault();
     // TODO: Implement save logic
     navigate('/patients');
+  };
+
+  const handlePasteWhatsApp = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      setFormData(prev => ({
+        ...prev,
+        whatsappLog: text
+      }));
+    } catch (err) {
+      console.error('Falha ao acessar a área de transferência:', err);
+    }
   };
 
   return (
@@ -1060,12 +1066,47 @@ export function PatientForm({
             </Grid>
 
             <Grid item xs={12}>
+              <Box sx={{ display: 'flex', gap: 1, alignItems: 'flex-start' }}>
+                <TextField
+                  fullWidth
+                  label="Log WhatsApp"
+                  name="whatsappLog"
+                  value={formData.whatsappLog}
+                  onChange={handleTextChange}
+                  multiline
+                  rows={6}
+                  placeholder="Cole aqui a conversa do WhatsApp..."
+                  disabled={readOnly}
+                  sx={{
+                    '& .MuiInputBase-root': {
+                      fontFamily: 'monospace',
+                      fontSize: '0.9rem'
+                    }
+                  }}
+                />
+                <IconButton 
+                  onClick={handlePasteWhatsApp}
+                  disabled={readOnly}
+                  sx={{ 
+                    mt: 1,
+                    backgroundColor: 'primary.main',
+                    color: 'white',
+                    '&:hover': {
+                      backgroundColor: 'primary.dark',
+                    }
+                  }}
+                >
+                  <WhatsAppIcon />
+                </IconButton>
+              </Box>
+            </Grid>
+            <Grid item xs={12}>
               <TextField
+                fullWidth
                 label="Observações"
                 name="observations"
                 value={formData.observations}
                 onChange={handleTextChange}
-                fullWidth
                 multiline
                 rows={4}
                 InputProps={{
