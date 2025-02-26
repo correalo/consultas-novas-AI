@@ -2,34 +2,26 @@ import { Box, Paper, Button, Typography, Dialog, DialogTitle, DialogContent, Dia
 import { PatientForm } from './PatientForm';
 import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
-
-type Period = '7 dias' | '30 dias' | '3 meses' | '6 meses' | '9 meses' | '12 meses' | '18 meses' | '2 anos' | '3 anos' | '4 anos' | '5 anos' | '6 anos' | '7 anos' | '8 anos' | '9 anos' | '10 anos' | '11 anos';
-
-type FollowUpData = {
-  exams?: string;
-  returns?: string;
-  attendance?: 'sim' | 'nao';
-  forwardExams?: boolean;
-  contact1?: boolean;
-  contact2?: boolean;
-  contact3?: boolean;
-};
+import { Period, FollowUpData } from '../../types/followUp';
 
 export function PatientView() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isEditing, setIsEditing] = useState(false);
   const [openDialog, setOpenDialog] = useState(false);
+  const [patient, setPatient] = useState<any>(null);
   const [followUp, setFollowUp] = useState<Record<Period, FollowUpData>>({
     '7 dias': {},
     '30 dias': {},
+    '90 dias': {},
     '3 meses': {},
     '6 meses': {},
     '9 meses': {},
     '12 meses': {},
+    '15 meses': {},
     '18 meses': {},
     '2 anos': {},
     '3 anos': {},
@@ -40,10 +32,40 @@ export function PatientView() {
     '8 anos': {},
     '9 anos': {},
     '10 anos': {},
-    '11 anos': {}
+    '11 anos': {},
+    '12 anos': {},
+    '13 anos': {},
+    '14 anos': {},
+    '15 anos': {}
   });
   const [classification, setClassification] = useState<string>('');
   const [surgeryDate, setSurgeryDate] = useState<string>('');
+
+  // Carregar dados do paciente
+  useEffect(() => {
+    const fetchPatient = async () => {
+      try {
+        const response = await fetch(`/api/patients/${id}`);
+        if (!response.ok) throw new Error('Failed to fetch patient');
+        const data = await response.json();
+        setPatient(data);
+        setClassification(data.classification || '');
+        setSurgeryDate(data.surgeryDate || '');
+        if (data.followUp) {
+          setFollowUp(prevFollowUp => ({
+            ...prevFollowUp,
+            ...data.followUp
+          }));
+        }
+      } catch (error) {
+        console.error('Error fetching patient:', error);
+      }
+    };
+
+    if (id) {
+      fetchPatient();
+    }
+  }, [id]);
 
   const handleFollowUpChange = (data: { patientId: string; followUp: Record<Period, FollowUpData> }) => {
     setFollowUp(data.followUp);
@@ -88,9 +110,29 @@ export function PatientView() {
     setOpenDialog(false);
   };
 
+  // Salvar dados do paciente
   const handleSave = async () => {
-    // Implementar a lógica de salvar
-    setIsEditing(false);
+    if (!patient) return;
+
+    try {
+      const response = await fetch(`/api/patients/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          ...patient,
+          classification,
+          surgeryDate,
+          followUp
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to update patient');
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error updating patient:', error);
+    }
   };
 
   return (

@@ -8,6 +8,8 @@ interface IFollowUp {
   contact1?: boolean;
   contact2?: boolean;
   contact3?: boolean;
+  contact4?: boolean;
+  contact5?: boolean;
 }
 
 export interface IPatient extends mongoose.Document {
@@ -41,6 +43,8 @@ const followUpSchema = new mongoose.Schema({
   contact1: Boolean,
   contact2: Boolean,
   contact3: Boolean,
+  contact4: Boolean,
+  contact5: Boolean,
 });
 
 const patientSchema = new mongoose.Schema({

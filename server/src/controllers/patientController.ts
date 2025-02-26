@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Patient } from '../models/Patient';
 import { logger } from '../utils/logger';
+import { dateUtils } from '../utils/dateUtils';
 
 // Tipo para erros do Mongoose
 interface MongooseError extends Error {
@@ -19,10 +20,21 @@ interface PaginationQuery {
 export const createPatient = async (req: Request, res: Response) => {
   try {
     // Validação básica dos campos obrigatórios
-    const { name, birthDate, cpf } = req.body;
+    const { name, birthDate, cpf, surgeryDate, followUpData } = req.body;
     if (!name || !birthDate || !cpf) {
       return res.status(400).json({ 
         message: 'Nome, data de nascimento e CPF são campos obrigatórios' 
+      });
+    }
+
+    // Se houver data de cirurgia e dados de acompanhamento, recalcula as datas
+    if (surgeryDate && followUpData) {
+      Object.keys(followUpData).forEach(period => {
+        if (followUpData[period]) {
+          const returnDate = dateUtils.calculateReturnDate(surgeryDate, period);
+          followUpData[period].returns = returnDate;
+          followUpData[period].exams = dateUtils.calculateExamDate(returnDate);
+        }
       });
     }
 
@@ -108,36 +120,48 @@ export const getPatient = async (req: Request, res: Response) => {
 export const updatePatient = async (req: Request, res: Response) => {
   try {
     const { id } = req.params;
-    
+    const { surgeryDate, followUpData } = req.body;
+
+    // Validar ID
     if (!id.match(/^[0-9a-fA-F]{24}$/)) {
       return res.status(400).json({ message: 'ID inválido' });
     }
 
-    const patient = await Patient.findById(id);
+    // Se houver data de cirurgia e dados de acompanhamento, recalcula as datas
+    if (surgeryDate && followUpData) {
+      logger.info(`Recalculando datas para paciente ${id}`, { surgeryDate });
+      
+      Object.keys(followUpData).forEach(period => {
+        if (followUpData[period] && followUpData[period].enabled) {
+          const returnDate = dateUtils.calculateReturnDate(surgeryDate, period);
+          if (returnDate) {
+            followUpData[period].returns = returnDate;
+            followUpData[period].exams = dateUtils.calculateExamDate(returnDate);
+            logger.info(`Período ${period}:`, {
+              returnDate,
+              examDate: followUpData[period].exams
+            });
+          }
+        }
+      });
+    }
+
+    const patient = await Patient.findByIdAndUpdate(
+      id,
+      { ...req.body, followUpData },
+      { new: true, runValidators: true }
+    );
+
     if (!patient) {
       return res.status(404).json({ message: 'Paciente não encontrado' });
     }
 
-    // Validar dados de atualização
-    if (req.body.cpf && req.body.cpf !== patient.cpf) {
-      const existingPatient = await Patient.findOne({ cpf: req.body.cpf });
-      if (existingPatient) {
-        return res.status(400).json({ 
-          message: 'Já existe um paciente com este CPF' 
-        });
-      }
-    }
-
-    // Atualizar dados do paciente
-    Object.assign(patient, req.body);
-    await patient.save();
-
-    logger.info(`Paciente atualizado: ${patient._id}`);
+    logger.info(`Paciente atualizado: ${id}`);
     res.json(patient);
   } catch (error: unknown) {
     const err = error as MongooseError;
     logger.error(`Erro ao atualizar paciente: ${err.message}`);
-    res.status(500).json({ message: err.message });
+    res.status(400).json({ message: err.message });
   }
 };
 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import type { FC, ChangeEvent } from 'react';
+import { Period, FollowUpData } from '../../types/followUp';
 import {
   Table,
   TableBody,
@@ -9,19 +9,23 @@ import {
   TableRow,
   Paper,
   TextField,
-  Checkbox,
-  FormControlLabel,
   Box,
   Radio,
   RadioGroup,
   styled,
   Typography,
   IconButton,
-  Collapse
+  Collapse,
+  Checkbox,
+  FormControlLabel
 } from '@mui/material';
-import { green, red } from '@mui/material/colors';
+import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
+import { ptBR } from 'date-fns/locale';
+import { format, parse } from 'date-fns';
+import { green } from '@mui/material/colors';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
-import KeyboardArrowUpIcon from '@mui/icons-material/KeyboardArrowUp';
+import { isValidDisplayFormat } from '../../utils/dateFormatUtils';
 
 // Componentes de radio button personalizados
 const GreenRadio = styled(Radio)({
@@ -30,16 +34,11 @@ const GreenRadio = styled(Radio)({
   },
 });
 
-const RedRadio = styled(Radio)({
-  '&.Mui-checked': {
-    color: red[600],
-  },
-});
-
-const periods = [
+const periods: Period[] = [
   '7 dias',
   '30 dias',
   '90 dias',
+  '3 meses',
   '6 meses',
   '9 meses',
   '12 meses',
@@ -59,98 +58,42 @@ const periods = [
   '13 anos',
   '14 anos',
   '15 anos'
-] as const;
-
-interface FollowUpData {
-  exams?: string;
-  returns?: string;
-  attendance?: string;
-  forwardExams?: boolean;
-  contact1?: boolean;
-  contact2?: boolean;
-  contact3?: boolean;
-  contact4?: boolean;
-  contact5?: boolean;
-}
+];
 
 interface FollowUpTableProps {
   patientId: string;
-  onDataChange?: (data: { patientId: string; followUp: Record<string, FollowUpData> }) => void;
-  followUp?: Record<string, FollowUpData>;
+  followUp: Record<Period, FollowUpData>;
+  onDataChange?: (data: { patientId: string; followUp: Record<Period, FollowUpData> }) => void;
   surgeryDate?: string;
   onSurgeryDateChange?: (date: string) => void;
   classification?: string;
   readOnly?: boolean;
 }
 
-// Lista de feriados fixos (dd/mm)
-const FIXED_HOLIDAYS = [
-  '01/01', // Ano Novo
-  '21/04', // Tiradentes
-  '01/05', // Dia do Trabalho
-  '07/09', // Independência
-  '12/10', // Nossa Senhora
-  '02/11', // Finados
-  '15/11', // Proclamação da República
-  '25/12', // Natal,
-];
-
 // Função para verificar se uma data é feriado
 const isHoliday = (date: Date): boolean => {
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const dateString = `${day}/${month}`;
-  
-  // Verifica feriados fixos
-  if (FIXED_HOLIDAYS.includes(dateString)) {
-    return true;
-  }
+  // Implementação básica para feriados nacionais fixos
+  const month = date.getMonth() + 1;
+  const day = date.getDate();
 
-  // Páscoa e feriados móveis (calculados para cada ano)
-  const year = date.getFullYear();
-  const easterDate = calculateEaster(year);
-  const carnivalDate = new Date(easterDate);
-  carnivalDate.setDate(easterDate.getDate() - 47); // Carnaval (terça)
-  const corpusChristiDate = new Date(easterDate);
-  corpusChristiDate.setDate(easterDate.getDate() + 60); // Corpus Christi
-
-  const mobileDates = [
-    easterDate,
-    carnivalDate,
-    corpusChristiDate,
+  // Lista de feriados nacionais fixos (dia/mês)
+  const fixedHolidays = [
+    { day: 1, month: 1 },   // Ano Novo
+    { day: 21, month: 4 },  // Tiradentes
+    { day: 1, month: 5 },   // Dia do Trabalho
+    { day: 7, month: 9 },   // Independência
+    { day: 12, month: 10 }, // Nossa Senhora Aparecida
+    { day: 2, month: 11 },  // Finados
+    { day: 15, month: 11 }, // Proclamação da República
+    { day: 25, month: 12 }, // Natal
   ];
 
-  return mobileDates.some(holiday => 
-    holiday.getDate() === date.getDate() &&
-    holiday.getMonth() === date.getMonth() &&
-    holiday.getFullYear() === date.getFullYear()
-  );
-};
-
-// Função para calcular a data da Páscoa (Algoritmo de Meeus/Jones/Butcher)
-const calculateEaster = (year: number): Date => {
-  const a = year % 19;
-  const b = Math.floor(year / 100);
-  const c = year % 100;
-  const d = Math.floor(b / 4);
-  const e = b % 4;
-  const f = Math.floor((b + 8) / 25);
-  const g = Math.floor((b - f + 1) / 3);
-  const h = (19 * a + b - d - g + 15) % 30;
-  const i = Math.floor(c / 4);
-  const k = c % 4;
-  const l = (32 + 2 * e + 2 * i - h - k) % 7;
-  const m = Math.floor((a + 11 * h + 22 * l) / 451);
-  const month = Math.floor((h + l - 7 * m + 114) / 31);
-  const day = ((h + l - 7 * m + 114) % 31) + 1;
-  
-  return new Date(year, month - 1, day);
+  return fixedHolidays.some(holiday => holiday.day === day && holiday.month === month);
 };
 
 const isValidDay = (date: Date): boolean => {
-  const dayOfWeek = date.getDay();
-  // 0 = Domingo, 2 = Terça, 5 = Sexta, 6 = Sábado
-  return ![0, 2, 5, 6].includes(dayOfWeek) && !isHoliday(date);
+  const day = date.getDay(); // 0 = Domingo, 5 = Sexta, 6 = Sábado
+  return day !== 0 && day !== 5 && day !== 6 && !isHoliday(date); // Exclui domingo, sexta e sábado
 };
 
 const getNextValidDay = (date: Date): Date => {
@@ -161,88 +104,184 @@ const getNextValidDay = (date: Date): Date => {
   return nextDate;
 };
 
-const calculateReturnDate = (surgeryDate: string, period: string): string => {
-  const surgeryDateObj = new Date(surgeryDate);
-  const returnDate = new Date(surgeryDateObj);
+const getPreviousValidDay = (date: Date): Date => {
+  const prevDate = new Date(date);
+  while (!isValidDay(prevDate)) {
+    prevDate.setDate(prevDate.getDate() - 1);
+  }
+  return prevDate;
+};
 
-  // Parse the period string to get the number and unit
-  const [amount, unit] = period.split(' ');
-  const numericAmount = parseInt(amount);
-
-  switch (unit) {
-    case 'dias':
-      returnDate.setDate(surgeryDateObj.getDate() + numericAmount);
-      break;
-    case 'meses':
-      returnDate.setMonth(surgeryDateObj.getMonth() + numericAmount);
-      break;
-    case 'anos':
-      returnDate.setFullYear(surgeryDateObj.getFullYear() + numericAmount);
-      break;
-    default:
-      break;
+const calculateReturnDate = (surgeryDate: string, period: Period): string => {
+  console.log('calculateReturnDate chamado:', { surgeryDate, period });
+  
+  if (!surgeryDate) {
+    console.log('Data da cirurgia vazia');
+    return '';
   }
 
-  // Ajusta para o próximo dia válido
-  const validDate = getNextValidDay(returnDate);
+  const [day, month, year] = surgeryDate.split('/').map(Number);
+  console.log('Partes da data:', { day, month, year });
+  
+  if (!day || !month || !year) {
+    console.error('Data de cirurgia inválida:', surgeryDate);
+    return '';
+  }
 
-  // Formatar a data como dd/mm/aaaa
-  const day = validDate.getDate().toString().padStart(2, '0');
-  const month = (validDate.getMonth() + 1).toString().padStart(2, '0');
-  const year = validDate.getFullYear();
+  const date = new Date(year, month - 1, day);
+  console.log('Data inicial:', date.toISOString());
+  
+  const newDate = new Date(date);
+  const numericValue = period.match(/\d+/)?.[0];
+  
+  if (!numericValue) {
+    console.error('Não foi possível extrair valor numérico do período:', period);
+    return '';
+  }
 
-  return `${day}/${month}/${year}`;
+  const value = parseInt(numericValue);
+  console.log('Valor extraído:', value);
+
+  if (period.includes('dias')) {
+    newDate.setDate(date.getDate() + value);
+  } else if (period.includes('meses') || period.includes('mes')) {
+    newDate.setMonth(date.getMonth() + value);
+  } else if (period.includes('anos') || period.includes('ano')) {
+    newDate.setFullYear(date.getFullYear() + value);
+  } else {
+    // Se não encontrar nenhum dos padrões acima, assume que é em meses
+    newDate.setMonth(date.getMonth() + value);
+  }
+
+  console.log('Data após cálculo inicial:', newDate.toISOString());
+
+  // Encontra o próximo dia válido (não é feriado nem fim de semana)
+  const validDate = getNextValidDay(newDate);
+  console.log('Data após validação:', validDate.toISOString());
+  
+  // Formata a data de retorno
+  const returnDay = validDate.getDate().toString().padStart(2, '0');
+  const returnMonth = (validDate.getMonth() + 1).toString().padStart(2, '0');
+  const returnYear = validDate.getFullYear();
+  
+  const result = `${returnDay}/${returnMonth}/${returnYear}`;
+  console.log('Data de retorno formatada:', result);
+  
+  return result;
 };
 
 const calculateExamDate = (returnDateStr: string): string => {
-  const [day, month, year] = returnDateStr.split('/').map(Number);
-  const returnDate = new Date(year, month - 1, day); // mês é 0-indexed
-  const examDate = new Date(returnDate);
+  console.log('calculateExamDate chamado:', { returnDateStr });
   
-  // Subtrai 10 dias da data de retorno
+  if (!returnDateStr) {
+    console.log('Data de retorno vazia');
+    return '';
+  }
+
+  const [day, month, year] = returnDateStr.split('/').map(Number);
+  console.log('Partes da data:', { day, month, year });
+  
+  if (!day || !month || !year) {
+    console.error('Data de retorno inválida:', returnDateStr);
+    return '';
+  }
+
+  const returnDate = new Date(year, month - 1, day);
+  console.log('Data de retorno:', returnDate.toISOString());
+  
+  const examDate = new Date(returnDate);
   examDate.setDate(returnDate.getDate() - 10);
+  console.log('Data do exame inicial:', examDate.toISOString());
+
+  // Encontra o dia útil anterior se necessário
+  const validDate = getPreviousValidDay(examDate);
+  console.log('Data do exame após validação:', validDate.toISOString());
 
   // Formatar a data como dd/mm/aaaa
-  const examDay = examDate.getDate().toString().padStart(2, '0');
-  const examMonth = (examDate.getMonth() + 1).toString().padStart(2, '0');
-  const examYear = examDate.getFullYear();
+  const examDay = validDate.getDate().toString().padStart(2, '0');
+  const examMonth = (validDate.getMonth() + 1).toString().padStart(2, '0');
+  const examYear = validDate.getFullYear();
 
-  return `${examDay}/${examMonth}/${examYear}`;
+  const result = `${examDay}/${examMonth}/${examYear}`;
+  console.log('Data do exame formatada:', result);
+  
+  return result;
 };
 
 export function FollowUpTable({ 
   patientId, 
+  followUp,
   onDataChange,
-  followUp: initialFollowUp = {},
   surgeryDate = '',
   onSurgeryDateChange,
   classification,
   readOnly = false
 }: FollowUpTableProps) {
-  const [followUpData, setFollowUpData] = useState<Record<string, FollowUpData>>(initialFollowUp);
+  console.log('FollowUpTable renderizado:', { surgeryDate, classification, readOnly });
+  
+  const [followUpData, setFollowUpData] = useState<Record<Period, FollowUpData>>(followUp);
   const [isExpanded, setIsExpanded] = useState(false);
   const isEnabled = classification === 'compareceu operado' && !readOnly;
 
   // Calculate return dates when surgery date changes
   useEffect(() => {
-    if (surgeryDate && isEnabled) {
-      const newData = { ...followUpData };
-      
-      periods.forEach(period => {
-        const returnDate = calculateReturnDate(surgeryDate, period);
-        newData[period] = {
-          ...newData[period],
-          returns: returnDate,
-          exams: calculateExamDate(returnDate)
-        };
+    console.log('useEffect FollowUpTable:', {
+      surgeryDate,
+      isEnabled,
+      classification,
+      followUpData
+    });
+    
+    if (!surgeryDate || !isEnabled) {
+      console.log('Condições não atendidas:', {
+        temDataCirurgia: !!surgeryDate,
+        estaHabilitado: isEnabled
       });
-      
-      setFollowUpData(newData);
-      onDataChange?.({ patientId, followUp: newData });
+      return;
     }
-  }, [surgeryDate, isEnabled]);
 
-  const handleChange = (period: string, field: keyof FollowUpData, value: string | boolean) => {
+    // Validar formato da data (dd/mm/yyyy)
+    if (!isValidDisplayFormat(surgeryDate)) {
+      console.error('Data da cirurgia em formato inválido:', surgeryDate);
+      return;
+    }
+
+    const calculateDates = () => {
+      console.log('Iniciando cálculo de datas para data de cirurgia:', surgeryDate);
+      const newData = { ...followUpData };
+      let hasChanges = false;
+
+      periods.forEach(period => {
+        console.log(`\nProcessando período: ${period}`);
+        const returnDate = calculateReturnDate(surgeryDate, period);
+        console.log('Data de retorno calculada:', returnDate);
+        
+        if (returnDate) {
+          hasChanges = true;
+          const examDate = calculateExamDate(returnDate);
+          console.log('Data do exame calculada:', examDate);
+          
+          newData[period] = {
+            ...newData[period],
+            returns: returnDate,
+            exams: examDate
+          };
+        }
+      });
+
+      if (hasChanges) {
+        console.log('Atualizando dados com novas datas:', newData);
+        setFollowUpData(newData);
+        onDataChange?.({ patientId, followUp: newData });
+      }
+    };
+
+    // Adiciona um pequeno delay para garantir que a data está no formato correto
+    const timer = setTimeout(calculateDates, 100);
+    return () => clearTimeout(timer);
+  }, [surgeryDate, isEnabled, patientId, onDataChange]);
+
+  const handleChange = (period: Period, field: keyof FollowUpData, value: string | boolean) => {
     if (!isEnabled) return;
     
     const newData = {
@@ -298,7 +337,10 @@ export function FollowUpTable({
               backgroundColor: '#eef1f4',
             },
             '& .MuiTableCell-root': {
+              padding: '4px 8px',
               borderColor: '#e0e0e0',
+              whiteSpace: 'nowrap',
+              fontSize: '0.8rem'
             },
           }}>
             <TableHead>
@@ -314,20 +356,38 @@ export function FollowUpTable({
               {/* Linha da data da cirurgia */}
               <TableRow>
                 <TableCell>
-                  <Typography variant="body2" color="textSecondary">
+                  <Typography variant="body2" color="textSecondary" sx={{ fontSize: '0.8rem' }}>
                     Data da Cirurgia
                   </Typography>
                 </TableCell>
                 <TableCell>
-                  <TextField
-                    type="date"
-                    value={surgeryDate}
-                    onChange={(e) => onSurgeryDateChange?.(e.target.value)}
-                    disabled={!isEnabled}
-                    size="small"
-                    sx={{ minWidth: '140px' }}
-                    InputLabelProps={{ shrink: true }}
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDateFns} adapterLocale={ptBR}>
+                    <DatePicker
+                      value={surgeryDate ? parse(surgeryDate, 'dd/MM/yyyy', new Date()) : null}
+                      onChange={(newValue) => {
+                        if (newValue) {
+                          const formattedDate = format(newValue, 'dd/MM/yyyy');
+                          onSurgeryDateChange?.(formattedDate);
+                        }
+                      }}
+                      disabled={!isEnabled}
+                      slotProps={{
+                        textField: {
+                          size: "small",
+                          sx: { 
+                            width: '120px',
+                            '& .MuiInputLabel-root': {
+                              display: 'none'
+                            },
+                            '& .MuiInputBase-input': {
+                              fontSize: '0.8rem',
+                              padding: '8px',
+                            }
+                          }
+                        }
+                      }}
+                    />
+                  </LocalizationProvider>
                 </TableCell>
                 <TableCell />
                 <TableCell />
@@ -344,10 +404,19 @@ export function FollowUpTable({
                         onChange={(e) => handleChange(period, 'exams', e.target.value)}
                         disabled={!isEnabled}
                         size="small"
-                        fullWidth
+                        sx={{ 
+                          width: '120px',
+                          '& .MuiInputLabel-root': {
+                            fontSize: '0.8rem',
+                          },
+                          '& .MuiInputBase-input': {
+                            fontSize: '0.8rem',
+                            padding: '8px',
+                          }
+                        }}
                       />
                     ) : (
-                      <Box sx={{ height: '40px' }} /> // Espaçador para manter o alinhamento
+                      <Box sx={{ width: '120px' }} /> // Espaçador para manter o alinhamento
                     )}
                   </TableCell>
                   <TableCell>
@@ -357,7 +426,16 @@ export function FollowUpTable({
                       onChange={(e) => handleChange(period, 'returns', e.target.value)}
                       disabled={!isEnabled}
                       size="small"
-                      sx={{ minWidth: '140px' }}
+                      sx={{ 
+                        width: '120px',
+                        '& .MuiInputLabel-root': {
+                          fontSize: '0.8rem',
+                        },
+                        '& .MuiInputBase-input': {
+                          fontSize: '0.8rem',
+                          padding: '8px',
+                        }
+                      }}
                     />
                   </TableCell>
                   <TableCell>
@@ -365,16 +443,26 @@ export function FollowUpTable({
                       row
                       value={followUpData[period]?.attendance || ''}
                       onChange={(e) => handleChange(period, 'attendance', e.target.value)}
+                      sx={{ 
+                        '& .MuiFormControlLabel-root': {
+                          marginRight: 0.5,
+                          '& .MuiFormControlLabel-label': {
+                            fontSize: '0.8rem'
+                          }
+                        }
+                      }}
                     >
                       <FormControlLabel
                         value="sim"
-                        control={<GreenRadio size="small" disabled={!isEnabled} />}
+                        control={<GreenRadio size="small" />}
                         label="Sim"
+                        disabled={!isEnabled}
                       />
                       <FormControlLabel
                         value="nao"
-                        control={<RedRadio size="small" disabled={!isEnabled} />}
+                        control={<Radio size="small" />}
                         label="Não"
+                        disabled={!isEnabled}
                       />
                     </RadioGroup>
                   </TableCell>
@@ -383,21 +471,44 @@ export function FollowUpTable({
                       control={
                         <Checkbox
                           checked={followUpData[period]?.forwardExams || false}
-                          onChange={(e) => handleChange(period, 'forwardExams', e.target.checked)}
+                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                            handleChange(period, 'forwardExams', e.target.checked)
+                          }
                           disabled={!isEnabled}
                           size="small"
                         />
                       }
-                      label={`Encaminhar (${period})`}
+                      label="Encaminhar"
+                      sx={{ 
+                        marginRight: 0,
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: '0.8rem'
+                        }
+                      }}
                     />
                   </TableCell>
                   <TableCell>
-                    <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Box sx={{ 
+                      display: 'flex', 
+                      flexDirection: 'row',
+                      gap: 0.5,
+                      flexWrap: 'nowrap',
+                      '& .MuiFormControlLabel-root': {
+                        marginRight: 0,
+                        marginLeft: 0,
+                        '& .MuiFormControlLabel-label': {
+                          fontSize: '0.8rem',
+                          whiteSpace: 'nowrap'
+                        }
+                      }
+                    }}>
                       <FormControlLabel
                         control={
                           <Checkbox
                             checked={followUpData[period]?.contact1 || false}
-                            onChange={(e) => handleChange(period, 'contact1', e.target.checked)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'contact1', e.target.checked)
+                            }
                             disabled={!isEnabled}
                             size="small"
                           />
@@ -408,7 +519,9 @@ export function FollowUpTable({
                         control={
                           <Checkbox
                             checked={followUpData[period]?.contact2 || false}
-                            onChange={(e) => handleChange(period, 'contact2', e.target.checked)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'contact2', e.target.checked)
+                            }
                             disabled={!isEnabled}
                             size="small"
                           />
@@ -419,7 +532,9 @@ export function FollowUpTable({
                         control={
                           <Checkbox
                             checked={followUpData[period]?.contact3 || false}
-                            onChange={(e) => handleChange(period, 'contact3', e.target.checked)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'contact3', e.target.checked)
+                            }
                             disabled={!isEnabled}
                             size="small"
                           />
@@ -430,7 +545,9 @@ export function FollowUpTable({
                         control={
                           <Checkbox
                             checked={followUpData[period]?.contact4 || false}
-                            onChange={(e) => handleChange(period, 'contact4', e.target.checked)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'contact4', e.target.checked)
+                            }
                             disabled={!isEnabled}
                             size="small"
                           />
@@ -441,7 +558,9 @@ export function FollowUpTable({
                         control={
                           <Checkbox
                             checked={followUpData[period]?.contact5 || false}
-                            onChange={(e) => handleChange(period, 'contact5', e.target.checked)}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'contact5', e.target.checked)
+                            }
                             disabled={!isEnabled}
                             size="small"
                           />

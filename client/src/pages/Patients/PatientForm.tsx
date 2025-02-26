@@ -25,6 +25,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
 import { useTheme, useMediaQuery } from '@mui/material';
+import { toDisplayDateFormat } from '../../utils/dateFormatUtils';
 
 const HOSPITALS = [
   'Nenhum',
@@ -202,7 +203,7 @@ interface PatientFormProps {
 
 export function PatientForm({ 
   onClassificationChange, 
-  onSurgeryDateChange,
+  onSurgeryDateChange, 
   standalone = true, 
   readOnly = false 
 }: PatientFormProps) {
@@ -338,6 +339,11 @@ export function PatientForm({
         [name]: value,
         age,
       }));
+    } else if (name === 'consultationDate') {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: value,
+      }));
     } else {
       setFormData((prev) => ({
         ...prev,
@@ -380,11 +386,36 @@ export function PatientForm({
     } else if (name === 'classification') {
       setFormData((prev) => ({ ...prev, [name]: value }));
       onClassificationChange?.(value);
+    } else if (name === 'surgeryDate') {
+      setFormData((prev) => ({ ...prev, [name]: value }));
+      onSurgeryDateChange?.(value);
     } else {
       setFormData((prev) => ({
         ...prev,
         [name]: value,
       }));
+    }
+  };
+
+  const handleDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    console.log(`Mudança de data em ${name}:`, { original: value });
+    
+    const formattedDate = toDisplayDateFormat(value);
+    console.log('Data formatada:', formattedDate);
+
+    if (name === 'surgeryDate') {
+      setFormData(prev => ({ ...prev, [name]: formattedDate }));
+      onSurgeryDateChange?.(formattedDate);
+    } else if (name === 'birthDate') {
+      const age = calculateAge(formattedDate);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formattedDate,
+        age,
+      }));
+    } else if (name === 'consultationDate') {
+      setFormData(prev => ({ ...prev, [name]: formattedDate }));
     }
   };
 
@@ -626,8 +657,8 @@ export function PatientForm({
                 type="date"
                 label="Data de Nascimento"
                 name="birthDate"
-                value={formData.birthDate}
-                onChange={handleTextChange}
+                value={formData.birthDate ? formData.birthDate.split('/').reverse().join('-') : ''}
+                onChange={handleDateChange}
                 InputLabelProps={{ shrink: true }}
                 disabled={readOnly}
               />
@@ -760,6 +791,20 @@ export function PatientForm({
             </Grid>
 
             {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
+            <Grid item xs={12} sm={2}>
+              <TextField
+                required
+                fullWidth
+                type="date"
+                label="Data da Cirurgia"
+                name="surgeryDate"
+                value={formData.surgeryDate ? formData.surgeryDate.split('/').reverse().join('-') : ''}
+                onChange={handleDateChange}
+                InputLabelProps={{ shrink: true }}
+                disabled={readOnly}
+                sx={{ mb: 2 }}
+              />
+            </Grid>
             <Grid item xs={12} sm={3}>
               <FormControl fullWidth required>
                 <InputLabel>Convênio</InputLabel>
