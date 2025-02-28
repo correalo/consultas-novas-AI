@@ -37,7 +37,6 @@ const GreenRadio = styled(Radio)({
 const periods: Period[] = [
   '7 dias',
   '30 dias',
-  '90 dias',
   '3 meses',
   '6 meses',
   '9 meses',
@@ -375,7 +374,7 @@ export function FollowUpTable({
                         textField: {
                           size: "small",
                           sx: { 
-                            width: '120px',
+                            width: '150px !important',
                             '& .MuiInputLabel-root': {
                               display: 'none'
                             },
@@ -467,25 +466,27 @@ export function FollowUpTable({
                     </RadioGroup>
                   </TableCell>
                   <TableCell>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={followUpData[period]?.forwardExams || false}
-                          onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
-                            handleChange(period, 'forwardExams', e.target.checked)
-                          }
-                          disabled={!isEnabled}
-                          size="small"
-                        />
-                      }
-                      label="Encaminhar"
-                      sx={{ 
-                        marginRight: 0,
-                        '& .MuiFormControlLabel-label': {
-                          fontSize: '0.8rem'
+                    {period !== '7 dias' && period !== '30 dias' && (
+                      <FormControlLabel
+                        control={
+                          <Checkbox
+                            checked={followUpData[period]?.forwardExams || false}
+                            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                              handleChange(period, 'forwardExams', e.target.checked)
+                            }
+                            disabled={!isEnabled}
+                            size="small"
+                          />
                         }
-                      }}
-                    />
+                        label={`Encaminhar (${period})`}
+                        sx={{ 
+                          marginRight: 0,
+                          '& .MuiFormControlLabel-label': {
+                            fontSize: '0.8rem'
+                          }
+                        }}
+                      />
+                    )}
                   </TableCell>
                   <TableCell>
                     <Box sx={{ 

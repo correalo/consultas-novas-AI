@@ -364,7 +364,7 @@ export function PatientForm({
     }));
   };
 
-  const handleSelectChange = (e: SelectChangeEvent<string> | React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleSelectChange = (e: SelectChangeEvent<string>) => {
     const { name, value } = e.target;
     
     if (name === 'insuranceProvider') {
@@ -384,13 +384,16 @@ export function PatientForm({
         }));
       }
     } else if (name === 'classification') {
-      setFormData((prev) => ({ ...prev, [name]: value }));
+      setFormData(prev => ({ ...prev, [name]: value }));
       onClassificationChange?.(value);
-    } else if (name === 'surgeryDate') {
-      setFormData((prev) => ({ ...prev, [name]: value }));
-      onSurgeryDateChange?.(value);
+      
+      // Se a classificação não for "compareceu operado", limpa a data de cirurgia
+      if (value.toLowerCase() !== 'compareceu operado') {
+        setFormData(prev => ({ ...prev, surgeryDate: '' }));
+        onSurgeryDateChange?.('');
+      }
     } else {
-      setFormData((prev) => ({
+      setFormData(prev => ({
         ...prev,
         [name]: value,
       }));
@@ -649,7 +652,7 @@ export function PatientForm({
               />
             </Grid>
 
-            {/* Segunda linha: Data de Nascimento, Telefone, Email e Data da Consulta */}
+            {/* Segunda linha: Data de Nascimento, Telefone, Email */}
             <Grid item xs={12} sm={2}>
               <TextField
                 required
@@ -718,20 +721,7 @@ export function PatientForm({
                 </IconButton>
               </div>
             </Grid>
-            <Grid item xs={12} sm={2.25}>
-              <TextField
-                required
-                fullWidth
-                type="datetime-local"
-                label="Data da Consulta"
-                name="consultationDate"
-                value={formData.consultationDate}
-                onChange={handleTextChange}
-                InputLabelProps={{ shrink: true }}
-                disabled={readOnly}
-              />
-            </Grid>
-            <Grid item xs={12} sm={3.75} sx={{ display: 'flex', gap: 1 }}>
+            <Grid item xs={12} sm={6} sx={{ display: 'flex', gap: 1 }}>
               <TextField
                 required
                 fullWidth
@@ -790,22 +780,21 @@ export function PatientForm({
               </div>
             </Grid>
 
-            {/* Terceira linha: Convênio, Tipo de Plano, Classificação */}
+            {/* Terceira linha: Data da Consulta, Convênio, Tipo de Plano, Classificação e Profissão */}
             <Grid item xs={12} sm={2}>
               <TextField
                 required
                 fullWidth
                 type="date"
-                label="Data da Cirurgia"
-                name="surgeryDate"
-                value={formData.surgeryDate ? formData.surgeryDate.split('/').reverse().join('-') : ''}
+                label="Data da Consulta"
+                name="consultationDate"
+                value={formData.consultationDate ? formData.consultationDate.split('/').reverse().join('-') : ''}
                 onChange={handleDateChange}
                 InputLabelProps={{ shrink: true }}
                 disabled={readOnly}
-                sx={{ mb: 2 }}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={2.5}>
               <FormControl fullWidth required>
                 <InputLabel>Convênio</InputLabel>
                 <Select
@@ -832,7 +821,7 @@ export function PatientForm({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={2.5}>
               <FormControl fullWidth>
                 <InputLabel>Tipo de Plano</InputLabel>
                 <Select
@@ -853,7 +842,7 @@ export function PatientForm({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid item xs={12} sm={2.5}>
               <FormControl fullWidth required>
                 <InputLabel>Classificação</InputLabel>
                 <Select
@@ -871,8 +860,8 @@ export function PatientForm({
                 </Select>
               </FormControl>
             </Grid>
-            <Grid item xs={12} sm={3}>
-              <FormControl fullWidth>
+            <Grid item xs={12} sm={2.5}>
+              <FormControl fullWidth required>
                 <InputLabel>Profissão</InputLabel>
                 <Select
                   name="profession"
