@@ -26,6 +26,7 @@ import {
 } from '@mui/icons-material';
 import { useNavigate } from 'react-router-dom';
 import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
+import api from '../../services/api';
 
 export function PatientList() {
   const navigate = useNavigate();
@@ -41,17 +42,13 @@ export function PatientList() {
   useEffect(() => {
     const fetchPatients = async () => {
       try {
-        const response = await fetch('/api/patients');
-        if (!response.ok) {
-          throw new Error('Falha ao carregar pacientes');
-        }
-        const data = await response.json();
-        setPatients(data.patients || data); // dependendo do formato da resposta
+        const response = await api.get<{ patients: any[] }>('/patients');
+        setPatients(Array.isArray(response) ? response : response.patients || []);
       } catch (error) {
         console.error('Erro ao carregar pacientes:', error);
         setSnackbar({
           open: true,
-          message: 'Erro ao carregar lista de pacientes',
+          message: 'Erro ao carregar lista de pacientes. Verifique sua conexão.',
           severity: 'error'
         });
       } finally {
@@ -67,38 +64,40 @@ export function PatientList() {
   };
 
   const handleEditPatient = (id: string) => {
-    navigate(`/patients/view/${id}`);
+    navigate(`/patients/edit/${id}`);
   };
 
   const handleViewPatient = (id: string) => {
     navigate(`/patients/view/${id}`);
   };
 
-  const handleDeletePatient = (id: string) => {
-    // Implementar lógica de deleção
-    console.log('Deletar paciente:', id);
+  const handleDeletePatient = async (id: string) => {
+    try {
+      await api.delete(`/patients/${id}`);
+      setPatients(patients.filter(patient => patient._id !== id));
+      setSnackbar({
+        open: true,
+        message: 'Paciente removido com sucesso',
+        severity: 'success'
+      });
+    } catch (error) {
+      console.error('Erro ao deletar paciente:', error);
+      setSnackbar({
+        open: true,
+        message: 'Erro ao remover paciente',
+        severity: 'error'
+      });
+    }
   };
 
   const handleUpdateFollowUp = useCallback(async (patientId: string, followUpData: any) => {
     try {
-      const response = await fetch(`/api/patients/${patientId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ followUpData }),
-      });
+      const response = await api.put(`/patients/${patientId}`, { followUpData });
+      const updatedPatient = response.data;
 
-      if (!response.ok) {
-        throw new Error('Falha ao atualizar dados de acompanhamento');
-      }
-
-      const updatedPatient = await response.json();
-
-      // Atualiza o estado local da lista de pacientes
       setPatients(prevPatients => 
         prevPatients.map(patient => 
-          patient.id === patientId 
+          patient._id === patientId 
             ? { ...patient, followUpData: updatedPatient.followUpData }
             : patient
         )
@@ -118,6 +117,10 @@ export function PatientList() {
       });
     }
   }, []);
+
+  const handleCloseSnackbar = () => {
+    setSnackbar({ ...snackbar, open: false });
+  };
 
   return (
     <Container maxWidth={false} sx={{ p: 3 }}>
@@ -162,7 +165,7 @@ export function PatientList() {
                 '& .MuiTableBody-root .MuiTableRow-root:hover': {
                   backgroundColor: '#e0e0e0',
                 },
-                maxHeight: 'calc(100vh - 180px)'  // Aumentando o espaço disponível
+                maxHeight: 'calc(100vh - 180px)'
               }}
             >
               <Table stickyHeader size="small">
@@ -182,77 +185,43 @@ export function PatientList() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {patients.map((patient: any) => (
-                    <TableRow key={patient.id} hover>
+                  {patients.map((patient) => (
+                    <TableRow key={patient._id} hover>
                       <TableCell>{patient.name}</TableCell>
                       <TableCell>{patient.cpf}</TableCell>
                       <TableCell>
-                        <Typography variant="body2" sx={{ fontSize: '0.625rem' }}>
-                          {new Date(patient.consultationDate).toLocaleString()}
-                        </Typography>
+                        {patient.consultationDate}
                       </TableCell>
                       <TableCell>{patient.insuranceProvider}</TableCell>
                       <TableCell>{patient.insuranceType}</TableCell>
-                      <TableCell>
-                        {patient.classification === 'routine' && 'Rotina'}
-                        {patient.classification === 'urgent' && 'Urgente'}
-                        {patient.classification === 'followup' && 'Retorno'}
-                        {patient.classification === 'pre-surgery' && 'Pré-cirúrgico'}
-                        {patient.classification === 'post-surgery' && 'Pós-cirúrgico'}
-                      </TableCell>
-                      <TableCell>{patient.profession || '-'}</TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap' }}>
-                          {patient.hospitals?.map((hospital: string) => (
-                            <Chip
-                              key={hospital}
-                              label={hospital}
-                              size="small"
-                              sx={{ maxWidth: '100px' }}
-                              title={hospital}
-                            />
-                          )) || '-'}
-                        </Box>
-                      </TableCell>
-                      <TableCell>{patient.referral || '-'}</TableCell>
-                      <TableCell>
-                        {patient.observations ? (
-                          <Tooltip title={patient.observations}>
-                            <span>{patient.observations.substring(0, 50)}...</span>
-                          </Tooltip>
-                        ) : (
-                          '-'
-                        )}
-                      </TableCell>
+                      <TableCell>{patient.classification}</TableCell>
+                      <TableCell>{patient.profession}</TableCell>
+                      <TableCell>{patient.hospitals?.join(', ')}</TableCell>
+                      <TableCell>{patient.referral}</TableCell>
+                      <TableCell>{patient.observations}</TableCell>
                       <TableCell align="center">
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Tooltip title="Ver detalhes">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleViewPatient(patient.id)}
-                            >
-                              <VisibilityIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Editar">
-                            <IconButton
-                              size="small"
-                              color="primary"
-                              onClick={() => handleEditPatient(patient.id)}
-                            >
-                              <EditIcon />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Excluir">
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => handleDeletePatient(patient.id)}
-                            >
-                              <DeleteIcon />
-                            </IconButton>
-                          </Tooltip>
+                        <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1 }}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleViewPatient(patient._id)}
+                            color="primary"
+                          >
+                            <VisibilityIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditPatient(patient._id)}
+                            color="primary"
+                          >
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeletePatient(patient._id)}
+                            color="error"
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
                         </Box>
                       </TableCell>
                     </TableRow>
@@ -262,33 +231,18 @@ export function PatientList() {
             </TableContainer>
           </Paper>
 
-          {patients.map((patient: any) => (
-            <Box key={`followup-${patient.id}`} sx={{ mt: 2 }}>
-              <Typography variant="h6" sx={{ mb: 1 }}>
-                Acompanhamento - {patient.name}
-              </Typography>
-              <FollowUpTable
-                patientId={patient.id}
-                followUp={patient.followUpData || {}}
-                classification={patient.classification || ''}
-                onDataChange={(data) => {
-                  handleUpdateFollowUp(patient.id, data.followUp);
-                }}
-              />
-            </Box>
-          ))}
+          <Snackbar
+            open={snackbar.open}
+            autoHideDuration={6000}
+            onClose={handleCloseSnackbar}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+          >
+            <Alert onClose={handleCloseSnackbar} severity={snackbar.severity}>
+              {snackbar.message}
+            </Alert>
+          </Snackbar>
         </>
       )}
-
-      <Snackbar 
-        open={snackbar.open} 
-        autoHideDuration={6000} 
-        onClose={() => setSnackbar(prev => ({ ...prev, open: false }))}
-      >
-        <Alert severity={snackbar.severity} sx={{ width: '100%' }}>
-          {snackbar.message}
-        </Alert>
-      </Snackbar>
     </Container>
   );
 }
