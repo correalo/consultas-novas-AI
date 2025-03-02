@@ -120,7 +120,7 @@ export function PatientList() {
   }, []);
 
   return (
-    <Container maxWidth="lg">
+    <Container maxWidth={false} sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
         <Typography variant="h5" color="primary">
           Pacientes
@@ -149,28 +149,36 @@ export function PatientList() {
                   '& .MuiTableCell-root': {
                     backgroundColor: '#e8e8e8',
                     fontWeight: 600,
+                    padding: '8px 16px',
+                    whiteSpace: 'nowrap'
+                  }
+                },
+                '& .MuiTableBody-root': {
+                  '& .MuiTableCell-root': {
+                    padding: '8px 16px',
+                    whiteSpace: 'nowrap'
                   }
                 },
                 '& .MuiTableBody-root .MuiTableRow-root:hover': {
                   backgroundColor: '#e0e0e0',
                 },
-                maxHeight: 'calc(100vh - 240px)'
+                maxHeight: 'calc(100vh - 180px)'  // Aumentando o espaço disponível
               }}
             >
-              <Table stickyHeader>
+              <Table stickyHeader size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Nome</TableCell>
-                    <TableCell>CPF</TableCell>
-                    <TableCell>Data da Consulta</TableCell>
-                    <TableCell>Convênio</TableCell>
-                    <TableCell>Tipo de Plano</TableCell>
-                    <TableCell>Classificação</TableCell>
-                    <TableCell>Profissão</TableCell>
-                    <TableCell>Hospitais</TableCell>
-                    <TableCell>Indicação</TableCell>
-                    <TableCell>Observações</TableCell>
-                    <TableCell align="center">Ações</TableCell>
+                    <TableCell sx={{ minWidth: '250px' }}>Nome</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>CPF</TableCell>
+                    <TableCell sx={{ minWidth: '150px' }}>Data da Consulta</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>Convênio</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>Tipo de Plano</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>Classificação</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>Profissão</TableCell>
+                    <TableCell sx={{ minWidth: '150px' }}>Hospitais</TableCell>
+                    <TableCell sx={{ minWidth: '120px' }}>Indicação</TableCell>
+                    <TableCell sx={{ minWidth: '200px' }}>Observações</TableCell>
+                    <TableCell align="center" sx={{ minWidth: '120px' }}>Ações</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -255,8 +263,8 @@ export function PatientList() {
           </Paper>
 
           {patients.map((patient: any) => (
-            <Box key={`followup-${patient.id}`} sx={{ mt: 4 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>
+            <Box key={`followup-${patient.id}`} sx={{ mt: 2 }}>
+              <Typography variant="h6" sx={{ mb: 1 }}>
                 Acompanhamento - {patient.name}
               </Typography>
               <FollowUpTable

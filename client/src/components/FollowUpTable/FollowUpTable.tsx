@@ -23,7 +23,7 @@ import { DatePicker, LocalizationProvider } from '@mui/x-date-pickers';
 import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 import { ptBR } from 'date-fns/locale';
 import { format, parse } from 'date-fns';
-import { green } from '@mui/material/colors';
+import { green, red } from '@mui/material/colors';
 import KeyboardArrowDownIcon from '@mui/icons-material/KeyboardArrowDown';
 import { isValidDisplayFormat } from '../../utils/dateFormatUtils';
 
@@ -31,6 +31,12 @@ import { isValidDisplayFormat } from '../../utils/dateFormatUtils';
 const GreenRadio = styled(Radio)({
   '&.Mui-checked': {
     color: green[600],
+  },
+});
+
+const RedRadio = styled(Radio)({
+  '&.Mui-checked': {
+    color: red[600],
   },
 });
 
@@ -459,7 +465,7 @@ export function FollowUpTable({
                       />
                       <FormControlLabel
                         value="nao"
-                        control={<Radio size="small" />}
+                        control={<RedRadio size="small" />}
                         label="Não"
                         disabled={!isEnabled}
                       />
