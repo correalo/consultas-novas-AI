@@ -13,17 +13,34 @@ export const toInputDateFormat = (date: string): string => {
 };
 
 // Converte data do formato yyyy-mm-dd para dd/mm/yyyy
-export const toDisplayDateFormat = (date: string): string => {
+export function toDisplayDateFormat(date: Date | string | undefined | null): string {
   if (!date) return '';
   
-  // Se já estiver no formato dd/mm/yyyy, retorna como está
-  if (/^\d{2}\/\d{2}\/\d{4}$/.test(date)) {
-    return date;
+  if (date instanceof Date) {
+    const day = String(date.getDate()).padStart(2, '0');
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}/${month}/${year}`;
   }
-  
-  // Converte de yyyy-mm-dd para dd/mm/yyyy
-  const [year, month, day] = date.split('-');
-  return `${day}/${month}/${year}`;
+
+  // Se for string, verifica o formato
+  if (typeof date === 'string') {
+    // Se já estiver no formato dd/mm/yyyy
+    if (date.includes('/')) {
+      return date;
+    }
+    
+    // Se estiver no formato ISO
+    try {
+      const [year, month, day] = date.split('T')[0].split('-');
+      return `${day}/${month}/${year}`;
+    } catch (error) {
+      console.warn('Data inválida:', date);
+      return '';
+    }
+  }
+
+  return '';
 };
 
 // Valida se a data está no formato dd/mm/yyyy

@@ -9,10 +9,11 @@ import {
 
 const router = express.Router();
 
-router.post('/', createPatient);
+// Rotas públicas (temporariamente para teste)
 router.get('/', getPatients);
 router.get('/:id', getPatient);
+router.post('/', createPatient);
 router.put('/:id', updatePatient);
 router.delete('/:id', deletePatient);
 
-export default router;
+export { router as patientRoutes };

@@ -3,12 +3,6 @@ import { Patient } from '../models/Patient';
 import { logger } from '../utils/logger';
 import { dateUtils } from '../utils/dateUtils';
 
-// Tipo para erros do Mongoose
-interface MongooseError extends Error {
-  message: string;
-  code?: number;
-}
-
 // Interface para parâmetros de paginação
 interface PaginationQuery {
   page?: string;
@@ -16,6 +10,56 @@ interface PaginationQuery {
   sortBy?: string;
   order?: 'asc' | 'desc';
 }
+
+export const getPatients = async (req: Request, res: Response) => {
+  try {
+    logger.info('Buscando todos os pacientes');
+    const { 
+      page = '1', 
+      limit = '10',
+      sortBy = 'name',
+      order = 'asc'
+    } = req.query as PaginationQuery;
+
+    const pageNumber = parseInt(page, 10);
+    const limitNumber = parseInt(limit, 10);
+    const skip = (pageNumber - 1) * limitNumber;
+
+    // Construir query de ordenação
+    const sortQuery: { [key: string]: 1 | -1 } = { [sortBy]: order === 'desc' ? -1 : 1 };
+
+    const patients = await Patient.find()
+      .sort(sortQuery)
+      .skip(skip)
+      .limit(limitNumber)
+      .lean();
+
+    logger.info(`${patients.length} pacientes encontrados`);
+    res.json(patients);
+  } catch (error) {
+    logger.error('Erro ao buscar pacientes:', error);
+    res.status(500).json({ message: 'Erro ao buscar pacientes' });
+  }
+};
+
+export const getPatient = async (req: Request, res: Response) => {
+  try {
+    const { id } = req.params;
+    
+    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: 'ID inválido' });
+    }
+
+    const patient = await Patient.findById(id);
+    if (!patient) {
+      return res.status(404).json({ message: 'Paciente não encontrado' });
+    }
+    res.json(patient);
+  } catch (error) {
+    logger.error('Erro ao buscar paciente por ID:', error);
+    res.status(500).json({ message: 'Erro ao buscar paciente' });
+  }
+};
 
 export const createPatient = async (req: Request, res: Response) => {
   try {
@@ -43,77 +87,9 @@ export const createPatient = async (req: Request, res: Response) => {
     
     logger.info(`Novo paciente criado: ${patient._id}`);
     res.status(201).json(patient);
-  } catch (error: unknown) {
-    const err = error as MongooseError;
-    logger.error(`Erro ao criar paciente: ${err.message}`);
-    
-    // Tratamento específico para erro de duplicação
-    if (err.code === 11000) {
-      return res.status(400).json({ 
-        message: 'Já existe um paciente com este CPF' 
-      });
-    }
-    
-    res.status(400).json({ message: err.message });
-  }
-};
-
-export const getPatients = async (req: Request, res: Response) => {
-  try {
-    const { 
-      page = '1', 
-      limit = '10',
-      sortBy = 'name',
-      order = 'asc'
-    } = req.query as PaginationQuery;
-
-    const pageNumber = parseInt(page, 10);
-    const limitNumber = parseInt(limit, 10);
-    const skip = (pageNumber - 1) * limitNumber;
-
-    // Construir query de ordenação
-    const sortQuery: { [key: string]: 1 | -1 } = { [sortBy]: order === 'desc' ? -1 : 1 };
-
-    // Executar queries em paralelo para melhor performance
-    const [patients, total] = await Promise.all([
-      Patient.find()
-        .sort(sortQuery)
-        .skip(skip)
-        .limit(limitNumber)
-        .lean(),
-      Patient.countDocuments()
-    ]);
-
-    res.json({
-      patients,
-      currentPage: pageNumber,
-      totalPages: Math.ceil(total / limitNumber),
-      totalItems: total
-    });
-  } catch (error: unknown) {
-    const err = error as MongooseError;
-    logger.error(`Erro ao listar pacientes: ${err.message}`);
-    res.status(500).json({ message: err.message });
-  }
-};
-
-export const getPatient = async (req: Request, res: Response) => {
-  try {
-    const { id } = req.params;
-    
-    if (!id.match(/^[0-9a-fA-F]{24}$/)) {
-      return res.status(400).json({ message: 'ID inválido' });
-    }
-
-    const patient = await Patient.findById(id);
-    if (!patient) {
-      return res.status(404).json({ message: 'Paciente não encontrado' });
-    }
-    res.json(patient);
-  } catch (error: unknown) {
-    const err = error as MongooseError;
-    logger.error(`Erro ao buscar paciente: ${err.message}`);
-    res.status(500).json({ message: err.message });
+  } catch (error) {
+    logger.error('Erro ao criar paciente:', error);
+    res.status(500).json({ message: 'Erro ao criar paciente' });
   }
 };
 
@@ -158,10 +134,9 @@ export const updatePatient = async (req: Request, res: Response) => {
 
     logger.info(`Paciente atualizado: ${id}`);
     res.json(patient);
-  } catch (error: unknown) {
-    const err = error as MongooseError;
-    logger.error(`Erro ao atualizar paciente: ${err.message}`);
-    res.status(400).json({ message: err.message });
+  } catch (error) {
+    logger.error('Erro ao atualizar paciente:', error);
+    res.status(500).json({ message: 'Erro ao atualizar paciente' });
   }
 };
 
@@ -179,10 +154,9 @@ export const deletePatient = async (req: Request, res: Response) => {
     }
 
     logger.info(`Paciente deletado: ${id}`);
-    res.json({ message: 'Paciente removido com sucesso' });
-  } catch (error: unknown) {
-    const err = error as MongooseError;
-    logger.error(`Erro ao deletar paciente: ${err.message}`);
-    res.status(500).json({ message: err.message });
+    res.status(204).send();
+  } catch (error) {
+    logger.error('Erro ao deletar paciente:', error);
+    res.status(500).json({ message: 'Erro ao deletar paciente' });
   }
 };

@@ -199,34 +199,60 @@ interface PatientFormProps {
   onSurgeryDateChange?: (date: string) => void;
   standalone?: boolean;
   readOnly?: boolean;
+  initialData?: FormData | null;
 }
 
 export function PatientForm({ 
   onClassificationChange, 
   onSurgeryDateChange, 
   standalone = true, 
-  readOnly = false 
+  readOnly = false,
+  initialData = null 
 }: PatientFormProps) {
   const navigate = useNavigate();
   const { id } = useParams();
   const [formData, setFormData] = useState<FormData>({
-    name: '',
-    sex: '',
-    cpf: '',
-    birthDate: '',
-    age: '',
-    phone: '',
-    email: '',
-    consultationDate: '',
-    insuranceProvider: '',
-    insuranceType: '',
-    classification: '',
-    profession: '',
-    hospitals: [],
-    referral: '',
-    observations: '',
-    surgeryDate: ''
+    name: initialData?.name || '',
+    sex: initialData?.sex || '',
+    cpf: initialData?.cpf || '',
+    birthDate: initialData?.birthDate || '',
+    age: initialData?.age || '',
+    phone: initialData?.phone || '',
+    email: initialData?.email || '',
+    consultationDate: initialData?.consultationDate || toDisplayDateFormat(new Date()),
+    insuranceProvider: initialData?.insuranceProvider || '',
+    insuranceType: initialData?.insuranceType || '',
+    classification: initialData?.classification || '',
+    profession: initialData?.profession || '',
+    hospitals: initialData?.hospitals || ['Nenhum'],
+    referral: initialData?.referral || '',
+    observations: initialData?.observations || '',
+    surgeryDate: initialData?.surgeryDate || ''
   });
+
+  // Atualizar o formulário quando os dados iniciais mudarem
+  useEffect(() => {
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        sex: initialData.sex || '',
+        cpf: initialData.cpf || '',
+        birthDate: initialData.birthDate || '',
+        age: initialData.age || '',
+        phone: initialData.phone || '',
+        email: initialData.email || '',
+        consultationDate: initialData.consultationDate || toDisplayDateFormat(new Date()),
+        insuranceProvider: initialData.insuranceProvider || '',
+        insuranceType: initialData.insuranceType || '',
+        classification: initialData.classification || '',
+        profession: initialData.profession || '',
+        hospitals: initialData.hospitals || ['Nenhum'],
+        referral: initialData.referral || '',
+        observations: initialData.observations || '',
+        surgeryDate: initialData.surgeryDate || ''
+      });
+    }
+  }, [initialData]);
 
   const [cpfStatus, setCpfStatus] = useState<{
     color: 'success' | 'warning' | 'error';

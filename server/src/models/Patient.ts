@@ -32,100 +32,31 @@ export interface IPatient extends mongoose.Document {
   observations: string;
 }
 
-const followUpSchema = new mongoose.Schema({
-  exams: String,
-  returns: String,
-  attendance: {
-    type: String,
-    enum: ['sim', 'nao'],
-  },
-  forwardExams: Boolean,
-  contact1: Boolean,
-  contact2: Boolean,
-  contact3: Boolean,
-  contact4: Boolean,
-  contact5: Boolean,
-});
-
 const patientSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  sex: {
-    type: String,
-    required: true,
-    enum: ['M', 'F'],
-  },
-  cpf: {
-    type: String,
-    required: true,
-    unique: true,
-    trim: true,
-  },
-  birthDate: {
-    type: String,
-    required: true,
-  },
-  age: {
-    type: String,
-    required: true,
-  },
-  phone: {
-    type: String,
-    required: true,
-    trim: true,
-  },
-  email: {
-    type: String,
-    trim: true,
-    lowercase: true,
-  },
-  consultationDate: {
-    type: String,
-    required: true,
-  },
-  insuranceProvider: {
-    type: String,
-    required: true,
-  },
-  insuranceType: {
-    type: String,
-    required: true,
-  },
-  classification: {
-    type: String,
-    required: true,
-  },
-  profession: {
-    type: String,
-  },
-  surgeryDate: {
-    type: String,
-  },
-  followUpData: {
-    type: Map,
-    of: followUpSchema,
-    default: {},
-  },
-  hospitals: [{
-    type: String,
-  }],
-  referral: {
-    type: String,
-  },
-  observations: {
-    type: String,
-  },
+  name: { type: String, required: true },
+  sex: { type: String, required: true },
+  cpf: { type: String, required: true, unique: true },
+  birthDate: { type: String, required: true },
+  age: { type: String },
+  phone: { type: String },
+  email: { type: String },
+  consultationDate: { type: String, required: true },
+  insuranceProvider: { type: String },
+  insuranceType: { type: String },
+  classification: { type: String },
+  profession: { type: String },
+  surgeryDate: { type: String },
+  followUpData: { type: mongoose.Schema.Types.Mixed, default: {} },
+  hospitals: [{ type: String }],
+  referral: { type: String },
+  observations: { type: String }
 }, {
-  timestamps: true,
+  timestamps: true
 });
 
 // Índices para melhorar a performance das consultas
-patientSchema.index({ cpf: 1 }, { unique: true });
+patientSchema.index({ cpf: 1 });
 patientSchema.index({ name: 1 });
-patientSchema.index({ email: 1 });
-patientSchema.index({ insuranceProvider: 1 });
+patientSchema.index({ consultationDate: 1 });
 
 export const Patient = mongoose.model<IPatient>('Patient', patientSchema);

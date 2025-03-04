@@ -6,6 +6,7 @@ import { useState, useEffect } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import { Period, FollowUpData } from '../../types/followUp';
+import api from '../../services/api';
 
 export function PatientView() {
   const { id } = useParams();
@@ -44,27 +45,32 @@ export function PatientView() {
   // Carregar dados do paciente
   useEffect(() => {
     const fetchPatient = async () => {
+      if (!id) return;
+      
       try {
-        const response = await fetch(`/api/patients/${id}`);
-        if (!response.ok) throw new Error('Failed to fetch patient');
-        const data = await response.json();
-        setPatient(data);
-        setClassification(data.classification || '');
-        setSurgeryDate(data.surgeryDate || '');
-        if (data.followUp) {
+        console.log('Fetching patient data for ID:', id);
+        const data = await api.get(`/api/patients/${id}`);
+        console.log('Received patient data:', data);
+        
+        // Se a API retornou um array, pegue o primeiro item
+        const patientData = Array.isArray(data) ? data[0] : data;
+        
+        setPatient(patientData);
+        setClassification(patientData.classification || '');
+        setSurgeryDate(patientData.surgeryDate || '');
+        if (patientData.followUp) {
           setFollowUp(prevFollowUp => ({
             ...prevFollowUp,
-            ...data.followUp
+            ...patientData.followUp
           }));
         }
       } catch (error) {
         console.error('Error fetching patient:', error);
+        // Adicione um snackbar ou outro feedback visual aqui
       }
     };
 
-    if (id) {
-      fetchPatient();
-    }
+    fetchPatient();
   }, [id]);
 
   const handleFollowUpChange = (data: { patientId: string; followUp: Record<Period, FollowUpData> }) => {
@@ -94,14 +100,7 @@ export function PatientView() {
   const handleConfirmDelete = async () => {
     if (id) {
       try {
-        const response = await fetch(`/api/patients/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (!response.ok) {
-          throw new Error('Falha ao deletar paciente');
-        }
-
+        await api.delete(`/api/patients/${id}`);
         navigate('/patients/list');
       } catch (error) {
         console.error('Erro ao deletar paciente:', error);
@@ -115,20 +114,12 @@ export function PatientView() {
     if (!patient) return;
 
     try {
-      const response = await fetch(`/api/patients/${id}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          ...patient,
-          classification,
-          surgeryDate,
-          followUp
-        }),
+      await api.put(`/api/patients/${id}`, {
+        ...patient,
+        classification,
+        surgeryDate,
+        followUp
       });
-
-      if (!response.ok) throw new Error('Failed to update patient');
       setIsEditing(false);
     } catch (error) {
       console.error('Error updating patient:', error);
@@ -186,6 +177,7 @@ export function PatientView() {
           onSurgeryDateChange={handleSurgeryDateChange}
           standalone={false}
           readOnly={!isEditing}
+          initialData={patient}
         />
       </Paper>
       
@@ -205,7 +197,7 @@ export function PatientView() {
         open={openDialog}
         onClose={() => setOpenDialog(false)}
       >
-        <DialogTitle>Confirmar exclusão</DialogTitle>
+        <DialogTitle>Confirmar Exclusão</DialogTitle>
         <DialogContent>
           <DialogContentText>
             Tem certeza que deseja excluir este paciente? Esta ação não pode ser desfeita.
