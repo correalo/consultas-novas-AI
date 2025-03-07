@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: prontuario-medico-mongodb
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+    environment:
+      - MONGO_INITDB_DATABASE=prontuario-medico
+    restart: unless-stopped
+    networks:
+      - app-network
+
+  # You can uncomment this service if you want to include a MongoDB admin UI
+  # mongo-express:
+  #   image: mongo-express:latest
+  #   container_name: prontuario-medico-mongo-express
+  #   ports:
+  #     - "8081:8081"
+  #   environment:
+  #     - ME_CONFIG_MONGODB_SERVER=mongodb
+  #     - ME_CONFIG_BASICAUTH_USERNAME=admin
+  #     - ME_CONFIG_BASICAUTH_PASSWORD=password
+  #   depends_on:
+  #     - mongodb
+  #   restart: unless-stopped
+  #   networks:
+  #     - app-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  app-network:
+    driver: bridge
