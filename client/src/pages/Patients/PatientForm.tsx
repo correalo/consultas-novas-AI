@@ -15,7 +15,9 @@ import {
   Checkbox,
   FormLabel,
   IconButton,
-  InputAdornment
+  InputAdornment,
+  Snackbar,
+  Alert
 } from '@mui/material';
 import ForwardToInboxIcon from '@mui/icons-material/ForwardToInbox';
 import WhatsAppIcon from '@mui/icons-material/WhatsApp';
@@ -26,6 +28,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { formatCPF, validateCPF } from '../../utils/cpfValidator';
 import { useTheme, useMediaQuery } from '@mui/material';
 import { toDisplayDateFormat } from '../../utils/dateFormatUtils';
+import api from '../../services/api';
 
 const HOSPITALS = [
   'Nenhum',
@@ -578,10 +581,48 @@ export function PatientForm({
     };
   }, []);
 
+  const [notification, setNotification] = useState<{ type: 'success' | 'error', message: string } | null>(null);
+
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    // TODO: Implement save logic
-    navigate('/patients');
+  
+    try {
+
+      // Prepare data for API
+      const patientData = {
+        ...formData
+      };
+            
+      if (id) {
+        await api.put<FormData>(`/api/patients/${id}`, patientData);
+        setNotification({
+          type: 'success',
+          message: 'Paciente atualizado com sucesso!'
+        });
+      } else {
+        await api.post<FormData>('/api/patients', patientData);
+        setNotification({
+          type: 'success',
+          message: 'Paciente criado com sucesso!'
+        });
+      }
+      
+      // Wait a bit for the user to see the notification before redirecting
+      setTimeout(() => {
+        navigate('/patients');
+      }, 1500);
+      
+    } catch (error) {
+      console.error('Erro ao salvar paciente:', error);
+      setNotification({
+        type: 'error',
+        message: error instanceof Error ? error.message : 'Erro ao salvar paciente'
+      });
+    }
+  };
+
+  const handleCloseNotification = () => {
+    setNotification(null);
   };
 
   return (
@@ -1044,6 +1085,24 @@ export function PatientForm({
           </Grid>
         </Box>
       </form>
+      
+      {/* Notification */}
+      <Snackbar 
+        open={notification !== null} 
+        autoHideDuration={6000} 
+        onClose={handleCloseNotification}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+      >
+        {notification && (
+          <Alert 
+            onClose={handleCloseNotification} 
+            severity={notification.type} 
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        )}
+      </Snackbar>
     </Box>
   );
 }
