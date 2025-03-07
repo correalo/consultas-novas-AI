@@ -10,7 +10,7 @@ export function AppRoutes() {
       <Route path="/patients" element={<Navigate to="/patients/list" replace />} />
       <Route path="/patients/list" element={<PatientList />} />
       <Route path="/patients/view" element={<PatientView />} />
-      <Route path="/patients/view/:id" element={<PatientView />} />
+      <Route path="/patients/:id" element={<PatientView />} />
       <Route path="/patients/new" element={<PatientForm standalone />} />
     </Routes>
   );
