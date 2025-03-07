@@ -1,7 +1,7 @@
 import { Box, Paper, Button, Typography, Dialog, DialogTitle, DialogContent, DialogActions, DialogContentText } from '@mui/material';
 import { PatientForm } from './PatientForm';
 import { FollowUpTable } from '../../components/FollowUpTable/FollowUpTable';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -11,7 +11,13 @@ import api from '../../services/api';
 export function PatientView() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isEditing, setIsEditing] = useState(false);
+  const location = useLocation();
+  
+  // Check if edit=true is in the query parameters
+  const searchParams = new URLSearchParams(location.search);
+  const editParam = searchParams.get('edit');
+  
+  const [isEditing, setIsEditing] = useState(editParam === 'true');
   const [openDialog, setOpenDialog] = useState(false);
   const [patient, setPatient] = useState<any>(null);
   const [followUp, setFollowUp] = useState<Record<Period, FollowUpData>>({
@@ -87,10 +93,15 @@ export function PatientView() {
 
   const handleEdit = () => {
     setIsEditing(true);
+    // Update URL to include edit=true without navigating
+    const newUrl = `${location.pathname}?edit=true`;
+    window.history.pushState({}, '', newUrl);
   };
 
   const handleCancel = () => {
     setIsEditing(false);
+    // Remove edit=true from URL without navigating
+    window.history.pushState({}, '', location.pathname);
   };
 
   const handleDelete = () => {
@@ -121,6 +132,8 @@ export function PatientView() {
         followUp
       });
       setIsEditing(false);
+      // Remove edit=true from URL without navigating
+      window.history.pushState({}, '', location.pathname);
     } catch (error) {
       console.error('Error updating patient:', error);
     }

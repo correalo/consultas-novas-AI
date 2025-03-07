@@ -96,7 +96,7 @@ export function PatientList() {
   };
 
   const handleEditPatient = (id: string) => {
-    navigate(`/patients/${id}/edit`);
+    navigate(`/patients/${id}?edit=true`);
   };
 
   const handleViewPatient = (id: string) => {
